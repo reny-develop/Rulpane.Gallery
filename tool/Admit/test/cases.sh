@@ -3,18 +3,19 @@
 # Writes case/: one issue body (<name>.md) and one expectation (<name>.expect) per case. Run it
 # again after changing a case here; run.sh reads what it wrote.
 #
-# An expectation is three lines: the exit code, a piece of text the answer has to contain, and
-# the licence GitHub would report for the repository.
+# An expectation is four lines: the exit code, a piece of text the answer has to contain, the
+# licence GitHub would report for the repository, and the organisations GitHub would list the
+# account that opened the issue, octocat, as a public member of.
 
 set -euo pipefail
 here=$(cd "$(dirname "$0")" && pwd)
 rm -rf "$here/case"
 mkdir -p "$here/case"
 
-# name | exit | the answer says | licence | kind | name | path | sample | [repository] | [commit]
+# name | exit | the answer says | licence | kind | name | path | sample | [repository] | [commit] | [organisations]
 c() {
     local name=$1 code=$2 says=$3 license=$4 kind=$5 id=$6 path=$7 sample=$8
-    printf '%s\n%s\n%s\n' "$code" "$says" "$license" > "$here/case/$name.expect"
+    printf '%s\n%s\n%s\n%s\n' "$code" "$says" "$license" "${11:-}" > "$here/case/$name.expect"
     cat > "$here/case/$name.md" <<EOF
 ### Kind
 
@@ -78,6 +79,9 @@ c licence        1 'under `GPL-3.0`'                     GPL-3.0 View octocat/st
 c bad-kind       1 'The **kind** is View, Theme or Paneset' MIT Layout octocat/stage-card views/stage-card.json panes/approval.json
 c someone-else   1 'opened by `octocat`'                 MIT  View  hubot/stage-card   views/stage-card.json panes/approval.json
 c their-repo     1 'one the account submitting owns'     MIT  View  octocat/stage-card views/stage-card.json panes/approval.json hubot/panes
+c organisation   0 '### ✓ Read — the view `acme/stage-card`' MIT View acme/stage-card views/stage-card.json panes/approval.json acme/panes "" acme
+c not-a-member   1 'not a public member of `acme`'       MIT  View  acme/stage-card    views/stage-card.json panes/approval.json acme/panes "" other
+c holder         1 'the account that owns its repository' MIT View  hubot/stage-card   views/stage-card.json panes/approval.json acme/panes "" acme
 c short-commit   1 '40 lowercase hexadecimal'            MIT  View  octocat/stage-card views/stage-card.json panes/approval.json "" 0123abc
 c missing        1 'has no `views/nothing.json`'         MIT  View  octocat/stage-card views/nothing.json   panes/approval.json
 c climbing       1 'path of a `.json` file'              MIT  View  octocat/stage-card ../secret.json       panes/approval.json

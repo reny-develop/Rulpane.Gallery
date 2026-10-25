@@ -5,7 +5,7 @@
 # ids are the query parameters tool/Site/Submit.cs fills them by. Change one and change the others.
 
 name: Submit to the Gallery
-description: Record a view, a theme or a paneset from a public repository of yours. Opened from the Gallery's submit page.
+description: Record a view, a theme or a paneset from a public repository of yours or your organisation's. Opened from the Gallery's submit page.
 title: "Submit "
 labels: [submission]
 body:
@@ -28,7 +28,7 @@ body:
     id: name
     attributes:
       label: Name
-      description: Your GitHub account, then a name of your choosing, in lowercase.
+      description: The GitHub account the repository belongs to (yours, or an organisation you are a public member of), then a name of your choosing, in lowercase.
       placeholder: octocat/kanban
     validations:
       required: true
@@ -36,7 +36,7 @@ body:
     id: repository
     attributes:
       label: Repository
-      description: A public repository your account owns.
+      description: A public repository of your account, or of an organisation you are a public member of.
       placeholder: octocat/rulpane-panes
     validations:
       required: true

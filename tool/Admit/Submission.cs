@@ -6,8 +6,11 @@ namespace Rulpane.Gallery;
 /// A submission as its issue states it: the form in <c>.github/ISSUE_TEMPLATE/submit.yml</c>,
 /// whose body is one <c>### </c> heading per field and the answer under it. Nothing here is
 /// believed beyond its shape; <see cref="Read"/> says what is wrong with the shape, all at once.
+/// A name is under the account that owns the repository. When the account that opened the issue
+/// is another, <see cref="Organization"/> is that owner, which has to be an organisation the
+/// author is a public member of: a thing only GitHub can say, so it is asked after this.
 /// </summary>
-public sealed partial record Submission(string Kind, string Id, string Repository, string Commit, string Path, string? Sample)
+public sealed partial record Submission(string Kind, string Id, string Repository, string Commit, string Path, string? Sample, string? Organization)
 {
     // The headings of the form. Change one and change the form, and the submit page that fills it.
     public const string KindHeading = "Kind";
@@ -37,20 +40,31 @@ public sealed partial record Submission(string Kind, string Id, string Repositor
 
         if (!Name().IsMatch(id))
         {
-            wrong.Add($"The **name** is your GitHub account and a name of your choosing, in lowercase: `{author.ToLowerInvariant()}/kanban`. It says `{id}`.");
-        }
-        else if (id[..id.IndexOf('/')] != author.ToLowerInvariant())
-        {
-            wrong.Add($"A release is submitted by the account it is named under: this issue was opened by `{author}`, so the name is `{author.ToLowerInvariant()}/{id[(id.IndexOf('/') + 1)..]}`.");
+            wrong.Add($"The **name** is your GitHub account, or the organisation whose repository it is, and a name of your choosing, in lowercase: `{author.ToLowerInvariant()}/kanban`. It says `{id}`.");
         }
 
+        string? organization = null;
         if (!RepositoryName().IsMatch(repository))
         {
             wrong.Add($"The **repository** is `owner/name` on GitHub. It says `{repository}`.");
         }
-        else if (!string.Equals(repository[..repository.IndexOf('/')], author, StringComparison.OrdinalIgnoreCase))
+        else if (Name().IsMatch(id))
         {
-            wrong.Add($"The **repository** is one the account submitting owns: `{author}/…`. It says `{repository}`.");
+            string owner = id[..id.IndexOf('/')];
+            string holder = repository[..repository.IndexOf('/')];
+            bool authorHolds = string.Equals(holder, author, StringComparison.OrdinalIgnoreCase);
+            if (!string.Equals(owner, holder, StringComparison.OrdinalIgnoreCase))
+            {
+                wrong.Add(owner == author.ToLowerInvariant()
+                    ? $"The **repository** is one the account submitting owns: `{author}/…`. It says `{repository}`. A release from an organisation's repository is named under the organisation."
+                    : authorHolds
+                        ? $"A release is submitted by the account it is named under: this issue was opened by `{author}`, so the name is `{author.ToLowerInvariant()}/{id[(id.IndexOf('/') + 1)..]}`."
+                        : $"A release is named under the account that owns its repository: `{holder.ToLowerInvariant()}/{id[(id.IndexOf('/') + 1)..]}`. It says `{id}`.");
+            }
+            else if (!authorHolds)
+            {
+                organization = owner;
+            }
         }
 
         if (!CommitSha().IsMatch(commit))
@@ -78,7 +92,7 @@ public sealed partial record Submission(string Kind, string Id, string Repositor
             throw new Refusal(string.Join("\n\n", wrong));
         }
 
-        return new Submission(kind, id, repository, commit, path, sample);
+        return new Submission(kind, id, repository, commit, path, sample, organization);
 
         void Check(string file, string heading)
         {

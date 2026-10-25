@@ -1,4 +1,5 @@
-# Holds the ledger to its copies, runs every release in its sample again, and publishes the pages.
+# Holds the ledger to its copies, runs every release in its sample again, takes a picture of each,
+# and publishes the pages.
 #
 # On every push to main, after a submission is recorded (submit.yml starts this), and once a
 # week: Rulpane changes on its own schedule, and a change to how it reads a document could stop
@@ -51,8 +52,27 @@ jobs:
       - name: Hold the ledger to its copies, and run every release in its sample
         run: dotnet run --project tool/Admit -c Release -- check --registry work/registry
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      # The pictures on the pages: each release opened as its "Open it" link opens it, in a
+      # Rulpane served from this runner with the Registry and this ledger beside it — what the
+      # next deploy of Rulpane will serve. A picture that cannot be taken is left off its page.
+      - name: Take the pictures
+        run: |
+          set -euo pipefail
+          dotnet publish rulpane/src/Rulpane.Viewer -c Release -o work/viewer --nologo -v quiet
+          rm -rf work/viewer/wwwroot/registry
+          cp -r work/registry work/viewer/wwwroot/registry
+          dotnet run --project rulpane/tool/Mirror -c Release -- --gallery work/viewer/wwwroot/gallery .
+          python3 -m http.server 5080 --bind 127.0.0.1 -d work/viewer/wwwroot >/dev/null 2>&1 &
+          for _ in $(seq 30); do curl -sf -o /dev/null http://127.0.0.1:5080/ && break; sleep 1; done
+          dotnet run --project tool/Site -c Release -- --shots-to-take work/shots.tsv
+          node tool/Shot/shoot.mjs work/shots.tsv http://127.0.0.1:5080/ work/shots
+
       - name: Render the pages
-        run: dotnet run --project tool/Site -c Release -- work/site --repository "$GITHUB_REPOSITORY"
+        run: dotnet run --project tool/Site -c Release -- work/site --registry work/registry --shots work/shots --repository "$GITHUB_REPOSITORY"
 
       - uses: actions/upload-pages-artifact@v3
         with:

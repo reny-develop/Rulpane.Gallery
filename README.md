@@ -50,21 +50,44 @@ longer offered, and Rulpane stops opening it, and every paneset that names it, a
 
 ## The pages and the checks
 
-[`tool/Site`](tool/Site/) renders the ledger and the copies, and nothing else: every name, a page
-for each — how to use it, every release, the document, its sample and its licence, and a link
-that opens it — and the submit page.
+[`tool/Site`](tool/Site/) renders the ledger and the copies: every name, a page for each — how to
+use it, every release, the document, its sample and its licence, and a link that opens it — and
+the submit page. It also looks each rule set up — those Rulpane bundles and those in the
+Registry, under the id each declares — and lists what opens it: the views that **fit it as they
+are**, which Rulpane reads against those rules with no `b` and plays from their start, every
+position as the view expects; the panesets that name it; and the views and themes tried with it
+in their samples.
+
+Each name is shown with a **picture of the screen its newest release opens** — a paneset as it
+is, a view or a theme in its sample — taken by [`tool/Shot`](tool/Shot/shoot.mjs) in headless
+Chrome, from a Rulpane served on the same machine with this ledger mirrored beside it. A release
+whose screen does not come up has no picture, and its page says nothing about one.
 
 [`pages.yml`](.github/workflows/pages.yml) runs on every push and once a week: every case in
 [`tool/Admit/test/`](tool/Admit/test/), then `tool/Admit check`, which holds every line to its
-copy and runs every release in its sample again with that week's Rulpane, and only then renders
-and publishes the pages. A change to Rulpane that would stop a published release is seen here
+copy and runs every release in its sample again with that week's Rulpane, and only then takes
+the pictures, renders the pages and publishes them. A change to Rulpane that would stop a published release is seen here
 first, and publishes nothing.
 
 ```sh
 bash tool/Admit/test/run.sh
 dotnet run --project ../Rulpane/tool/Mirror -- work/registry   # for samples that use the Registry
 dotnet run --project tool/Admit -- check --registry work/registry
-dotnet run --project tool/Site -- work/site
+dotnet run --project tool/Site -- work/site --registry work/registry
+```
+
+The pictures take a Rulpane to open the releases in, with the Registry and this ledger beside it,
+served from anywhere — the shot list's fragments are opened against the URL given — and Node 22
+or later:
+
+```sh
+dotnet publish ../Rulpane/src/Rulpane.Viewer -c Release -o work/viewer
+cp -r work/registry work/viewer/wwwroot/registry
+dotnet run --project ../Rulpane/tool/Mirror -- --gallery work/viewer/wwwroot/gallery .
+python3 -m http.server 5080 -d work/viewer/wwwroot &
+dotnet run --project tool/Site -- --shots-to-take work/shots.tsv
+node tool/Shot/shoot.mjs work/shots.tsv http://127.0.0.1:5080/ work/shots   # Chrome, or $CHROME
+dotnet run --project tool/Site -- work/site --registry work/registry --shots work/shots
 ```
 
 The tools build against Rulpane: on a workstation the clone beside this one, in CI a checkout in

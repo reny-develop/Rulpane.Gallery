@@ -10,8 +10,6 @@
   <ItemGroup>
     <ProjectReference Include="$(RulpaneRoot)src/Rulpane.Engine/Rulpane.Engine.csproj" />
     <ProjectReference Include="../Ledger/Rulpane.Gallery.Ledger.csproj" />
-    <!-- Where the bundled documents are, for a sample that names one. -->
-    <AssemblyMetadata Include="RulpaneRoot" Value="$([System.IO.Path]::GetFullPath('$(RulpaneRoot)'))" />
   </ItemGroup>
 
 </Project>

@@ -1,13 +1,15 @@
 // Decides whether a view, a theme or a paneset can be recorded in the Gallery, and records it.
 //
 //   dotnet run --project tool/Admit -- read <issue body> --author <login> --out <folder>
-//                                      [--checkout <folder> --license <spdx>] [--registry <folder>]
+//                                      [--checkout <folder> --license <spdx> --members <orgs>] [--registry <folder>]
 //   dotnet run --project tool/Admit -- record <folder>
 //   dotnet run --project tool/Admit -- check [--registry <folder>]
 //
 // read     takes the submission an issue states, clones the repository at the commit it names
 //          (or reads --checkout, which is how the tests run it), asks GitHub what licence the
-//          repository is under at that commit (or takes --license), and holds the release to
+//          repository is under at that commit (or takes --license) and, for an organisation's
+//          repository, whether the author is a public member of it (or takes --members, the
+//          organisations, comma-separated, it is one of), and holds the release to
 //          everything doc/policy.md says it is held to — its words, its shape, and a run in its
 //          sample with Rulpane's own code. It writes <folder>/answer.md either way and, when the
 //          release passes, <folder>/submission.json and <folder>/files/: the line and the copy
@@ -59,7 +61,7 @@ return positional switch
 
 static int Usage()
 {
-    Console.Error.WriteLine("usage: Admit read <issue body> --author <login> --out <folder> [--checkout <folder> --license <spdx>] [--registry <folder>]");
+    Console.Error.WriteLine("usage: Admit read <issue body> --author <login> --out <folder> [--checkout <folder> --license <spdx> --members <orgs>] [--registry <folder>]");
     Console.Error.WriteLine("       Admit record <folder>");
     Console.Error.WriteLine("       Admit check [--registry <folder>]");
     return 2;
@@ -77,6 +79,17 @@ async Task<int> ReadAsync(string bodyFile)
         if (ledger.FirstOrDefault(e => e.Id == submission.Id) is { } named && named.Kind != submission.Kind)
         {
             throw new Refusal($"`{submission.Id}` is a {named.Kind} in the Gallery, and a name is one thing for good. Give the {submission.Kind} a name of its own.");
+        }
+
+        if (submission.Organization is string organization)
+        {
+            bool member = options.TryGetValue("members", out string? members)
+                ? members.Split(',', StringSplitOptions.TrimEntries).Contains(organization, StringComparer.OrdinalIgnoreCase)
+                : await AskMemberAsync(organization, options["author"]);
+            if (!member)
+            {
+                throw new Refusal($"`{submission.Repository}` is not `{options["author"]}`'s, and a release is submitted by the account it is named under — or, for an organisation's repository, by a public member of the organisation. `{options["author"]}` is not a public member of `{organization}`, or `{organization}` is not an organisation. A member makes their membership public on the organisation's People page.");
+            }
         }
 
         string checkout = options.GetValueOrDefault("checkout") ?? Clone(submission, Path.Combine(output, "repository"));
@@ -350,17 +363,25 @@ static int Git(string directory, params string[] arguments)
     return git.ExitCode;
 }
 
+// Whether GitHub lists the author among the organisation's public members. An account that is
+// not an organisation has none, so a name under somebody else's account is refused here too.
+static async Task<bool> AskMemberAsync(string organization, string author)
+{
+    using HttpClient http = GitHub();
+    using HttpResponseMessage response = await http.GetAsync($"https://api.github.com/orgs/{organization}/public_members/{author}");
+    if (response.StatusCode is HttpStatusCode.NotFound)
+    {
+        return false;
+    }
+
+    response.EnsureSuccessStatusCode();
+    return response.StatusCode == HttpStatusCode.NoContent;
+}
+
 // The licence GitHub detects at that commit, and the file it detected it in.
 static async Task<(string, string)> AskLicenseAsync(Submission submission, string checkout)
 {
-    using var http = new HttpClient();
-    http.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("Rulpane.Gallery", "1"));
-    http.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/vnd.github+json"));
-    if (Environment.GetEnvironmentVariable("GITHUB_TOKEN") is { Length: > 0 } token)
-    {
-        http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-    }
-
+    using HttpClient http = GitHub();
     using HttpResponseMessage response = await http.GetAsync($"https://api.github.com/repos/{submission.Repository}/license?ref={submission.Commit}");
     if (response.StatusCode == HttpStatusCode.NotFound)
     {
@@ -370,6 +391,19 @@ static async Task<(string, string)> AskLicenseAsync(Submission submission, strin
     response.EnsureSuccessStatusCode();
     JsonNode found = JsonNode.Parse(await response.Content.ReadAsStringAsync())!;
     return (found["license"]?["spdx_id"]?.GetValue<string>() ?? "NOASSERTION", Path.Combine(checkout, found["path"]!.GetValue<string>()));
+}
+
+static HttpClient GitHub()
+{
+    var http = new HttpClient();
+    http.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("Rulpane.Gallery", "1"));
+    http.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/vnd.github+json"));
+    if (Environment.GetEnvironmentVariable("GITHUB_TOKEN") is { Length: > 0 } token)
+    {
+        http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+    }
+
+    return http;
 }
 
 static string FindLicense(string checkout) =>

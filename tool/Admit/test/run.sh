@@ -23,9 +23,9 @@ failed=0
 # Reads one case from the current directory, whose ledger it is held to.
 read_case() {
     local name=$1
-    { read -r code; read -r says; read -r license; } < "$here/case/$name.expect"
+    { read -r code; read -r says; read -r license; read -r members; } < "$here/case/$name.expect"
     local out="$work/$name"
-    admit read "$here/case/$name.md" --author octocat --out "$out" --checkout "$here/repository" --license "$license" >/dev/null 2>"$work/$name.err"
+    admit read "$here/case/$name.md" --author octocat --out "$out" --checkout "$here/repository" --license "$license" --members "$members" >/dev/null 2>"$work/$name.err"
     local got=$?
     if [[ $got -ne $code ]] || ! grep -qF -- "$says" "$out/answer.md" 2>/dev/null; then
         echo "✕ $name: exit $got (expected $code)"

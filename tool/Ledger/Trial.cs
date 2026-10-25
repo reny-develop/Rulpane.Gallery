@@ -27,20 +27,19 @@ public static class Trial
     /// <summary>What a trial saw: the rule set it ran, and how many positions it checked.</summary>
     public sealed record Seen(string RuleSet, int Positions, bool ReachedEnd);
 
+    /// <summary>Rules as Rulpane compiles them: the document a view is read against, and what it compiled to.</summary>
+    public sealed record Compiled(string Document, RuleContext Context);
+
     public static async Task<Seen> RunAsync(HttpClient http, Paneset paneset)
     {
-        string rules = paneset.Rules ?? throw new Refusal("The paneset names no rules: `r` is where they go.");
-        Source source = Attempt("The rules `r` names cannot be found", () => Source.Rules(rules));
-        string document = await AttemptAsync($"The rules{(source.IsPacked ? "" : $" `{rules}`")} cannot be read", () => source.ReadAsync(http));
-        IReadOnlyList<Document> held = await AttemptAsync("What the rules hold cannot be read", () => source.HoldsAsync(http, document));
-        RuleContext context = Attempt("The rules do not compile", () => Registry.Compile(Runtime, document, held));
+        Compiled rules = await CompileAsync(http, paneset.Rules ?? throw new Refusal("The paneset names no rules: `r` is where they go."));
 
         View? view = null;
         if (paneset.View is string layout)
         {
             Source viewSource = Attempt("The view `v` names cannot be found", () => Source.View(layout));
             string text = await AttemptAsync("The view cannot be read", () => viewSource.ReadAsync(http));
-            view = Attempt("The view does not fit the rules", () => View.Parse(text, context, document, paneset.Bind));
+            view = Attempt("The view does not fit the rules", () => View.Parse(text, rules.Context, rules.Document, paneset.Bind));
         }
         else if (paneset.Bind.Count > 0)
         {
@@ -54,7 +53,25 @@ public static class Trial
             Attempt("The theme is refused", () => Theme.Parse(text));
         }
 
-        Session session = Attempt("The state `s` is not one the rules can start from", () => Session.Open(context, paneset.State));
+        return Play(rules.Context, view, paneset.State);
+    }
+
+    /// <summary>The rules <paramref name="rules"/> names, as <c>r</c> names them, read and compiled with what they hold.</summary>
+    public static async Task<Compiled> CompileAsync(HttpClient http, string rules)
+    {
+        Source source = Attempt("The rules `r` names cannot be found", () => Source.Rules(rules));
+        string document = await AttemptAsync($"The rules{(source.IsPacked ? "" : $" `{rules}`")} cannot be read", () => source.ReadAsync(http));
+        IReadOnlyList<Document> held = await AttemptAsync("What the rules hold cannot be read", () => source.HoldsAsync(http, document));
+        return new Compiled(document, Attempt("The rules do not compile", () => Registry.Compile(Runtime, document, held)));
+    }
+
+    /// <summary>
+    /// Plays one line of the rules from <paramref name="state"/>, the state's <c>data</c> packed as
+    /// <c>s</c> carries it, or their start, holding every position to what <paramref name="view"/> expects.
+    /// </summary>
+    public static Seen Play(RuleContext context, View? view, string? state)
+    {
+        Session session = Attempt("The state `s` is not one the rules can start from", () => Session.Open(context, state));
         var played = new List<string>();
         for (int position = 1; ; position++)
         {

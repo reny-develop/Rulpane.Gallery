@@ -33,9 +33,15 @@ same checks.
 
 `<owner>/<name>`, in lowercase: `octocat/kanban`.
 
-- **The owner is the GitHub account that submits it**, and the repository it is read from
-  belongs to that account. An organisation's repository is not accepted yet
-- **The name is yours to choose** under your account, as letters, digits and `-`
+- **The owner is the GitHub account the repository belongs to**, and a release is submitted by
+  that account
+- **An organisation's repository** is submitted by any **public member** of the organisation,
+  and its releases are named under the organisation: `acme/kanban`, from `acme/…`. GitHub lists
+  an organisation's public members to anybody, which is how the Gallery checks; a member whose
+  membership is private makes it public on the organisation's People page first. Every public
+  member may submit a release of any of its names, so an organisation that wants fewer people
+  to has fewer public members. Who submitted each release stays on its issue
+- **The name is yours to choose** under the owner, as letters, digits and `-`
 - **A name is one kind for good.** `octocat/kanban` is a view or a theme or a paneset, and every
   release of it is the same kind, so a link that names it never gets something else
 - **A name is never handed to another account**

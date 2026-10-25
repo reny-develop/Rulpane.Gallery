@@ -45,5 +45,16 @@ public static class Style
         input, select { font: inherit; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--text); width: 100%; }
         .problems { color: var(--danger); margin: 0; }
         details { margin-top: 16px; }
+        .cards { list-style: none; padding: 0; margin: 24px 0 0; display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
+        .card { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+        .card .shot { display: block; text-decoration: none; aspect-ratio: 16 / 10; background: var(--sunken); border-bottom: 1px solid var(--line); }
+        .card .shot img { display: block; width: 100%; height: 100%; object-fit: cover; }
+        .card .none { display: flex; height: 100%; align-items: center; justify-content: center; color: var(--muted); font-size: 13px; }
+        .card .about { padding: 12px; display: grid; gap: 4px; }
+        .card .about p { margin: 0; }
+        .card .name { font-weight: 600; overflow-wrap: anywhere; }
+        figure.shot { margin: 16px 0; }
+        figure.shot img { display: block; width: 100%; max-width: 640px; height: auto; border: 1px solid var(--line); border-radius: 8px; }
+        figure.shot figcaption { color: var(--muted); font-size: 13px; margin-top: 6px; }
         """;
 }

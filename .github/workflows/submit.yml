@@ -2,7 +2,8 @@
 #
 # A submission is an issue opened from the gallery's submit page, through the form in
 # .github/ISSUE_TEMPLATE/submit.yml. It names a view, a theme or a paneset in a public repository
-# of the account that opened it, at one commit, and the sample it was tried in. This runs when the issue is
+# of the account that opened it, or of an organisation that account is a public member of, at one
+# commit, and the sample it was tried in. This runs when the issue is
 # opened and again whenever it is edited, so putting a submission right is editing it, and
 # nothing waits on anybody: the answer is a comment on the issue.
 #

@@ -20,6 +20,12 @@ public sealed class Origin(string viewer, string? registry, IReadOnlyList<Entry>
         BaseAddress = new Uri("http://rulpane.invalid/"),
     };
 
+    /// <summary>The names of the documents Rulpane bundles in <paramref name="folder"/>, such as <c>rulesets</c>: what a link names them by.</summary>
+    public static IEnumerable<string> Bundled(string folder) =>
+        Directory.EnumerateFiles(Path.Combine(RulpaneRoot, "src", "Rulpane.Viewer", "wwwroot", folder), "*.json")
+            .Select(f => Path.GetFileNameWithoutExtension(f)!)
+            .Order(StringComparer.Ordinal);
+
     /// <summary>The Rulpane checkout this tool was built against, whose bundled documents a sample may name.</summary>
     private static string RulpaneRoot =>
         typeof(Origin).Assembly.GetCustomAttributes<AssemblyMetadataAttribute>().Single(a => a.Key == "RulpaneRoot").Value!;
