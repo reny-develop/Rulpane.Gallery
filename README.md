@@ -4,8 +4,8 @@ Where views, themes and panesets for [Rulpane](https://github.com/reny-develop/R
 published, found and submitted. Anybody may submit one; it is recorded once a machine has read
 it, and **nobody reviews what it says**.
 
-> **Not open yet.** It is built and tested, and waits on GitHub: neither these pages nor
-> Rulpane is published.
+**Browse it: <https://reny-develop.github.io/Rulpane.Gallery/>** · **Submit one:
+<https://reny-develop.github.io/Rulpane.Gallery/submit/>**
 
 | Kind | What it is | A link names it in |
 | --- | --- | --- |
@@ -13,7 +13,7 @@ it, and **nobody reviews what it says**.
 | theme | colours, corners, typeface and spacing | `t=octocat/forest@1` |
 | paneset | rules, view, theme and where to start, as one document | `p=octocat/othello@1` |
 
-What each of those documents is, is Rulpane's to say, in [its readme](https://github.com/reny-develop/Rulpane#the-url).
+(`octocat/…` names show the form; they are not releases.) What each of those documents is, is Rulpane's to say, in [its readme](https://github.com/reny-develop/Rulpane#the-url).
 Rule sets are published to the [Rulealize Registry](https://github.com/reny-develop/Rulealize.Registry)
 and named from here, never submitted here.
 
