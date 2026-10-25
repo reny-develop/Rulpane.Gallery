@@ -37,7 +37,7 @@ public static partial class Wording
         var problems = new List<string>();
         foreach (var (at, text, shown) in Strings(root, "", false))
         {
-            if (Why(text, shown) is string why)
+            if (Why(text, shown, at.StartsWith("/expects/", StringComparison.Ordinal)) is string why)
             {
                 problems.Add($"`{file}` at `{(at.Length == 0 ? "/" : at)}` holds {why}: `{Shown(text)}`");
             }
@@ -47,11 +47,13 @@ public static partial class Wording
     }
 
     // A domain is looked for only in words the screen shows, where a binding such as move.to never is.
-    private static string? Why(string text, bool shown) =>
+    // Markup is not looked for in what a view expects: a type there is written list<string>, and
+    // Rulpane refuses anything there that is not a type.
+    private static string? Why(string text, bool shown, bool typed) =>
         text.Contains("://", StringComparison.Ordinal) || text.Contains("www.", StringComparison.OrdinalIgnoreCase) ? "an address"
         : Mail().IsMatch(text) ? "an e-mail address"
         : shown && Domain().IsMatch(text) ? "what reads as a domain name"
-        : Markup().IsMatch(text) ? "markup"
+        : !typed && Markup().IsMatch(text) ? "markup"
         : text.Any(Invisible) ? "a character that is not shown (a direction mark, a zero-width space or a byte-order mark)"
         : null;
 

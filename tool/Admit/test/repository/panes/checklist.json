@@ -1,0 +1,1 @@
+{ "$schema": "rulpane/paneset/v1", "r": "checklist", "b": { "all": "$steps", "done": "$done" }, "s": { "steps": ["a", "b"], "done": [] } }

@@ -1,0 +1,10 @@
+{
+  "$schema": "rulealize/view/v1",
+  // A view that expects lists: list<string> is a type, not markup.
+  "expects": { "projections": { "all": "list<string>", "done": "list<string>" } },
+  "layout": [
+    { "c": "list", "title": "Done", "bind": "done" },
+    { "c": "actions", "inputs": "*" },
+    { "c": "list", "title": "All", "bind": "all" }
+  ]
+}

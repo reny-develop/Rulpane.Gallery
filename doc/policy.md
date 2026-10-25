@@ -72,7 +72,8 @@ No string in it or in its sample — keys included — holds:
 
 - an address (`://` or `www.`), or an e-mail address
 - in a title, a text, a label or a name, what reads as a domain name (`help-desk.com`)
-- markup (`<b>`)
+- markup (`<b>`), anywhere but in the types a view `expects` (`list<string>`), where Rulpane
+  reads nothing but a type
 - a character that is not shown: a direction mark, a zero-width space, a byte-order mark
 
 A view has no block that shows a picture or a link, so this is about text alone, and it is the

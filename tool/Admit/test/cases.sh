@@ -48,6 +48,7 @@ c applied        0 '### ✓ Read — the view `octocat/stage-card`' MIT  View   
 c direct         0 'tried in `panes/request.json`'                 MIT  View     octocat/stage-card views/stage-card.json panes/request.json
 c board          0 'rule set `tictactoe@1.0.0`'                     MIT  View     octocat/squares    views/squares.json    panes/tictactoe.json
 c plain          0 'expects: not said'                              MIT  View     octocat/claim      views/claim.json      panes/approval-plain.json
+c typed          0 'expects: `all: list<string>`'              MIT  View     octocat/ticks      views/ticks.json      panes/checklist.json
 c theme          0 'its colours were checked on their own'          MIT  Theme    octocat/forest     themes/forest.json    ""
 c theme-shown    0 'tried in `panes/claim-in-forest.json`'          MIT  Theme    octocat/forest     themes/forest.json    panes/claim-in-forest.json
 c paneset        0 '### ✓ Read — the paneset `octocat/othello`'     MIT  Paneset  octocat/othello    panes/othello.json    ""
