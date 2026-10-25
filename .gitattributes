@@ -1,0 +1,24 @@
+# How line endings are decided belongs to this repository, not to whoever cloned
+# it. Without this file the answer comes from each developer's core.autocrlf, and
+# a setting nobody in the project can see is a setting that eventually differs —
+# which is how the rule set documents came to disagree about line endings while
+# they were still being kept in step by hand.
+
+# Every text file is stored LF. Git decides what counts as text.
+* text=auto
+
+# .editorconfig declares CRLF for C# source. Say the same thing here, so a
+# checkout and an editor cannot disagree about a file they both write.
+*.cs text eol=crlf
+
+# A shell script is run by bash, and bash reads a carriage return as part of the
+# command. These stay LF in a working copy as well as in the repository, on every
+# platform, because CI is not the only place they are meant to run.
+*.sh text eol=lf
+
+# A release's copy is its author's file to the byte: the ledger records its SHA-256, and a
+# line ending rewritten on the way in would make the copy disagree with the line.
+release/** -text
+
+# The test cases are read by bash, line by line: a carriage return would be part of the value.
+tool/Admit/test/** text eol=lf

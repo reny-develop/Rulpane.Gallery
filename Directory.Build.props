@@ -1,0 +1,12 @@
+<Project>
+
+  <!--
+    Rulpane, whose code reads a submission here exactly as the viewer will read it in a link.
+    CI checks it out into rulpane/; on a workstation it is the clone beside this one.
+  -->
+  <PropertyGroup>
+    <RulpaneRoot Condition="'$(RulpaneRoot)' == '' and Exists('$(MSBuildThisFileDirectory)rulpane/')">$(MSBuildThisFileDirectory)rulpane/</RulpaneRoot>
+    <RulpaneRoot Condition="'$(RulpaneRoot)' == ''">$(MSBuildThisFileDirectory)../Rulpane/</RulpaneRoot>
+  </PropertyGroup>
+
+</Project>

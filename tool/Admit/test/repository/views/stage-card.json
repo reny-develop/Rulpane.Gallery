@@ -1,0 +1,12 @@
+{
+  "$schema": "rulealize/view/v1",
+  // Where a case stands, as one chip, and what can be done about it.
+  "expects": {
+    "projections": { "stage": "string" }
+  },
+  "title": "Where it stands",
+  "layout": [
+    { "c": "fields", "rows": [ { "label": "Stage", "bind": "stage", "tone": { "approved": "ok", "rejected": "danger" } } ] },
+    { "c": "actions", "inputs": "*" }
+  ]
+}

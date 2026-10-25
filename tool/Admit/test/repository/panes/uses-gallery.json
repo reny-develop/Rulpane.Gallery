@@ -1,0 +1,1 @@
+{ "$schema": "rulpane/paneset/v1", "r": "approval", "v": "octocat/stage-card@1", "b": { "stage": "summary.stage" } }

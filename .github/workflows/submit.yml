@@ -1,0 +1,210 @@
+# Reads a submission, and records it when the release passes.
+#
+# A submission is an issue opened from the gallery's submit page, through the form in
+# .github/ISSUE_TEMPLATE/submit.yml. It names a view, a theme or a paneset in a public repository
+# of the account that opened it, at one commit, and the sample it was tried in. This runs when the issue is
+# opened and again whenever it is edited, so putting a submission right is editing it, and
+# nothing waits on anybody: the answer is a comment on the issue.
+#
+# Two jobs, so that the one that clones somebody's repository holds no token that can write.
+#
+#   read   clones the repository at the commit, asks GitHub its licence there, and runs
+#          tool/Admit, which holds the release to doc/policy.md with Rulpane's own code. What
+#          it hands on is the verdict, the answer, and the line and the copy to record.
+#
+#   answer records the release — numbering it against the ledger as it is at that moment, so
+#          two releases of one name read at the same time are numbered one after the
+#          other — posts the answer, and closes the issue once it is recorded. The push is made
+#          with GITHUB_TOKEN, which starts no workflow, so this starts pages.yml itself.
+#
+# Rulpane is checked out beside the tools, because they read a release with its code. While
+# Rulpane is private that takes RULPANE_READ_TOKEN, a token that can read it.
+
+name: submit
+
+on:
+  issues:
+    types: [opened, edited, reopened, labeled]
+
+concurrency:
+  group: submit-${{ github.event.issue.number }}
+  cancel-in-progress: true
+
+permissions: {}
+
+jobs:
+  read:
+    if: >
+      github.event.issue.state == 'open'
+      && contains(github.event.issue.labels.*.name, 'submission')
+      && (github.event.action != 'labeled' || github.event.label.name == 'submission')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    outputs:
+      verdict: ${{ steps.read.outputs.verdict }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/checkout@v4
+        with:
+          repository: reny-develop/Rulpane
+          path: rulpane
+          token: ${{ secrets.RULPANE_READ_TOKEN || github.token }}
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      # For a sample whose rules are the Registry's, or hold one of its rule sets.
+      - name: Copy the Registry's rule sets
+        run: dotnet run --project rulpane/tool/Mirror -c Release -- work/registry
+
+      # The body is whatever the person who opened the issue wrote. It reaches the tool as a
+      # file, through an environment variable, and is never put anywhere a shell would read it.
+      - name: Read the submission
+        id: read
+        env:
+          BODY: ${{ github.event.issue.body }}
+          AUTHOR: ${{ github.event.issue.user.login }}
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          set -uo pipefail
+          mkdir -p work
+          printf '%s' "$BODY" > work/body.md
+          dotnet run --project tool/Admit -c Release -- read work/body.md --author "$AUTHOR" --out work/read --registry work/registry
+          case $? in
+            0) echo "verdict=passed" >> "$GITHUB_OUTPUT" ;;
+            1) echo "verdict=refused" >> "$GITHUB_OUTPUT" ;;
+            *) exit 1 ;;
+          esac
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: read
+          path: |
+            work/read/answer.md
+            work/read/submission.json
+            work/read/files/
+          if-no-files-found: ignore
+
+  answer:
+    needs: read
+    if: always() && needs.read.result != 'skipped' && needs.read.result != 'cancelled'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: write
+      actions: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/checkout@v4
+        if: needs.read.outputs.verdict == 'passed'
+        with:
+          repository: reny-develop/Rulpane
+          path: rulpane
+          token: ${{ secrets.RULPANE_READ_TOKEN || github.token }}
+
+      - uses: actions/setup-dotnet@v4
+        if: needs.read.outputs.verdict == 'passed'
+        with:
+          dotnet-version: 10.0.x
+
+      - uses: actions/download-artifact@v4
+        if: needs.read.result == 'success'
+        with:
+          name: read
+          path: work/read
+
+      - name: Record the release
+        id: record
+        if: needs.read.outputs.verdict == 'passed'
+        env:
+          NUMBER: ${{ github.event.issue.number }}
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          dotnet build tool/Admit -c Release --nologo -v quiet
+
+          for attempt in 1 2 3 4 5; do
+            git fetch --quiet origin main
+            git checkout --quiet -B main origin/main
+            if ! reference=$(dotnet run --no-build --project tool/Admit -c Release -- record work/read 2> work/record.err); then
+              echo "recorded=false" >> "$GITHUB_OUTPUT"
+              echo "why=$(head -1 work/record.err)" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+
+            git add ledger/submitted.json release/
+            git commit --quiet -m "Record ${reference}" -m "Closes #${NUMBER}"
+            if git push --quiet origin HEAD:main; then
+              echo "recorded=true" >> "$GITHUB_OUTPUT"
+              echo "reference=${reference}" >> "$GITHUB_OUTPUT"
+              echo "commit=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+          done
+
+          echo "::error::The ledger could not be pushed after five attempts."
+          exit 1
+
+      - name: Check and publish main as recorded
+        if: steps.record.outputs.recorded == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run pages.yml --ref main
+
+      # One comment per submission, edited in place, so a submission edited six times does not
+      # carry six of them.
+      - name: Answer
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          NUMBER: ${{ github.event.issue.number }}
+          READ: ${{ needs.read.result }}
+          VERDICT: ${{ needs.read.outputs.verdict }}
+          RECORDED: ${{ steps.record.outputs.recorded }}
+          WHY: ${{ steps.record.outputs.why }}
+          REFERENCE: ${{ steps.record.outputs.reference }}
+          COMMIT: ${{ steps.record.outputs.commit }}
+        run: |
+          set -euo pipefail
+          if [[ "$READ" != success || ! -f work/read/answer.md || ( "$VERDICT" == passed && -z "$RECORDED" ) ]]; then
+            body="### Not read yet
+
+          Something on the Gallery's side went wrong while this was being read, and nothing was recorded. Edit this issue, or wait, and it is read again."
+          elif [[ "$RECORDED" == true ]]; then
+            body="$(cat work/read/answer.md)
+
+          Recorded as **${REFERENCE}** in ${COMMIT}. A link or a paneset names it by that, and Rulpane opens it once Rulpane is next deployed."
+          elif [[ "$RECORDED" == false ]]; then
+            body="### ✕ Not recorded
+
+          ${WHY}"
+          else
+            body=$(cat work/read/answer.md)
+          fi
+
+          marker='<!-- submit -->'
+          body="${marker}
+          ${body}"
+
+          existing=$(gh api --paginate "repos/${GITHUB_REPOSITORY}/issues/${NUMBER}/comments" \
+            --jq "[.[] | select(.body | startswith(\"${marker}\")) | .id] | last // empty" | tail -1)
+
+          if [[ -n "$existing" ]]; then
+            gh api -X PATCH "repos/${GITHUB_REPOSITORY}/issues/comments/${existing}" -f body="$body" >/dev/null
+          else
+            gh api -X POST "repos/${GITHUB_REPOSITORY}/issues/${NUMBER}/comments" -f body="$body" >/dev/null
+          fi
+
+          if [[ "$RECORDED" == true ]]; then
+            gh api -X PATCH "repos/${GITHUB_REPOSITORY}/issues/${NUMBER}" -f state=closed -f state_reason=completed >/dev/null
+          fi

@@ -1,0 +1,5 @@
+{
+  "$schema": "rulealize/view/v1",
+  "expects": { "projections": { "stage": "number" } },
+  "layout": [ { "c": "stats", "items": [ { "label": "Stage", "bind": "stage" } ] } ]
+}

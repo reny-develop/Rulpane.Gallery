@@ -1,0 +1,5 @@
+{
+  "$schema": "rulealize/view/v1",
+  "expects": { "projections": { "stage": "string" } },
+  "layout": [ { "c": "image", "src": "logo.png" } ]
+}

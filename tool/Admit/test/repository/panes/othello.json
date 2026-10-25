@@ -1,0 +1,8 @@
+{
+  "$schema": "rulpane/paneset/v1",
+  // Reversi on the bundled grid-game view, in the bundled paper theme.
+  "r": "reversi",
+  "v": "grid-game",
+  "b": { "board": "$board", "turn": "$turn" },
+  "t": "paper"
+}

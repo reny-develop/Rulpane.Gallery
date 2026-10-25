@@ -1,0 +1,10 @@
+{
+  "$schema": "rulealize/view/v1",
+  "ruleSet": "approval@1",
+  // A view for one rule set: it says nothing it expects, and reads the rules' own names.
+  "title": "Expense claim",
+  "layout": [
+    { "c": "fields", "rows": [ { "label": "Stage", "bind": "summary.stage" } ] },
+    { "c": "actions", "inputs": "*" }
+  ]
+}

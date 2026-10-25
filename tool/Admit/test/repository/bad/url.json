@@ -1,0 +1,8 @@
+{
+  "$schema": "rulealize/view/v1",
+  "expects": { "projections": { "stage": "string" } },
+  "layout": [
+    { "c": "text", "text": "Sign in again at https://example.test/login to continue." },
+    { "c": "fields", "rows": [ { "label": "Stage", "bind": "stage" } ] }
+  ]
+}

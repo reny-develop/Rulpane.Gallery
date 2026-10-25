@@ -1,0 +1,6 @@
+{
+  "$schema": "rulealize/view/v1",
+  "expects": { "projections": { "stage": "string" } },
+  "title": "Stage ‮",
+  "layout": [ { "c": "fields", "rows": [ { "label": "Stage", "bind": "stage" } ] } ]
+}

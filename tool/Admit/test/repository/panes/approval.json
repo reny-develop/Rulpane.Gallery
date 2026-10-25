@@ -1,0 +1,6 @@
+{
+  "$schema": "rulpane/paneset/v1",
+  // The approval rules keep the stage in summary.
+  "r": "approval",
+  "b": { "stage": "summary.stage" }
+}

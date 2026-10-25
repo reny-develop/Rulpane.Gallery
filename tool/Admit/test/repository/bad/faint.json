@@ -1,0 +1,4 @@
+{
+  "$schema": "rulealize/theme/v1",
+  "colors": { "light": { "text": "#d8d8d8" } }
+}

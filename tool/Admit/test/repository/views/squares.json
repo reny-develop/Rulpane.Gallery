@@ -1,0 +1,11 @@
+{
+  "$schema": "rulealize/view/v1",
+  "expects": {
+    "projections": { "board": "board", "turn": "string" },
+    "inputs": { "place": ["at"] }
+  },
+  "layout": [
+    { "c": "stats", "items": [ { "label": "To move", "bind": "turn" } ] },
+    { "c": "board", "bind": "board", "play": "place.at" }
+  ]
+}

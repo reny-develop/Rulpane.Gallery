@@ -1,0 +1,7 @@
+# An issue that is not a submission is about the tools, the pages or the policy, and is welcome
+# as an ordinary issue.
+blank_issues_enabled: true
+contact_links:
+  - name: Submit from the Gallery's page
+    url: https://reny-develop.github.io/Rulpane.Gallery/submit/
+    about: The submit page checks the fields before it opens the form.

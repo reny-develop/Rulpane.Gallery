@@ -1,0 +1,7 @@
+<Solution>
+  <Folder Name="/tool/">
+    <Project Path="tool/Admit/Rulpane.Gallery.Admit.csproj" />
+    <Project Path="tool/Ledger/Rulpane.Gallery.Ledger.csproj" />
+    <Project Path="tool/Site/Rulpane.Gallery.Site.csproj" />
+  </Folder>
+</Solution>

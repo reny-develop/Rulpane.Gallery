@@ -1,0 +1,64 @@
+# The form a submission is made through. The Gallery's submit page opens it with every field
+# filled in from the URL, so the person submitting presses one button.
+#
+# The labels below are the headings tool/Admit/Submission.cs reads the answers under, and the
+# ids are the query parameters tool/Site/Submit.cs fills them by. Change one and change the others.
+
+name: Submit to the Gallery
+description: Record a view, a theme or a paneset from a public repository of yours. Opened from the Gallery's submit page.
+title: "Submit "
+labels: [submission]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Opened from the [Gallery's submit page](https://reny-develop.github.io/Rulpane.Gallery/submit/). The result is posted here, and GitHub notifies you.
+
+        Everything below is read again out of the repository, at the commit you name. Nobody reviews what it says.
+  # An input, not a dropdown: GitHub fills inputs from the URL but leaves a dropdown unchosen.
+  - type: input
+    id: kind
+    attributes:
+      label: Kind
+      description: View, Theme or Paneset.
+      placeholder: View
+    validations:
+      required: true
+  - type: input
+    id: name
+    attributes:
+      label: Name
+      description: Your GitHub account, then a name of your choosing, in lowercase.
+      placeholder: octocat/kanban
+    validations:
+      required: true
+  - type: input
+    id: repository
+    attributes:
+      label: Repository
+      description: A public repository your account owns.
+      placeholder: octocat/rulpane-panes
+    validations:
+      required: true
+  - type: input
+    id: commit
+    attributes:
+      label: Commit
+      description: All 40 characters of the commit to read it at.
+      placeholder: 0123456789abcdef0123456789abcdef01234567
+    validations:
+      required: true
+  - type: input
+    id: path
+    attributes:
+      label: Path
+      description: The document's file, from the top of the repository.
+      placeholder: kanban.json
+    validations:
+      required: true
+  - type: input
+    id: sample
+    attributes:
+      label: Sample
+      description: A paneset in the repository with everything but the part you are submitting. Needed for a view, optional for a theme, none for a paneset.
+      placeholder: samples/kanban.json

@@ -1,0 +1,5 @@
+{
+  "$schema": "rulpane/paneset/v1",
+  "r": "request",
+  "s": { "subjects": ["mon-am", "mon-pm"], "stage": "draft", "subject": null }
+}

@@ -1,0 +1,15 @@
+## .NET build output
+[Bb]in/
+[Oo]bj/
+*.user
+.vs/
+.vscode/
+
+# Claude Code, personal settings
+.claude/settings.local.json
+
+# Where the readme's commands read a submission, copy the Registry and write the pages
+work/
+
+# Rulpane, checked out into this repository by CI so the tools read a submission with its code
+rulpane/

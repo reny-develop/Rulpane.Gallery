@@ -1,0 +1,6 @@
+{
+  "$schema": "rulealize/theme/v1",
+  "colors": { "light": { "accent": "#1f6b45", "accent-soft": "#e3f2e9" }, "dark": { "accent": "#7fd3a6" } },
+  "radius": "round",
+  "density": "compact"
+}
