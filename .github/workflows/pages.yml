@@ -6,8 +6,7 @@
 # a release that passed when it was recorded. A run where that happened fails here, before
 # anybody opens a link, and publishes nothing.
 #
-# Rulpane is checked out beside the tools, because they read a release with its code. While
-# Rulpane is private that takes RULPANE_READ_TOKEN, a token that can read it.
+# Rulpane is checked out beside the tools, because they read a release with its code.
 
 name: pages
 
@@ -37,7 +36,6 @@ jobs:
         with:
           repository: reny-develop/Rulpane
           path: rulpane
-          token: ${{ secrets.RULPANE_READ_TOKEN || github.token }}
 
       - uses: actions/setup-dotnet@v4
         with:

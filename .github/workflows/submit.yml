@@ -18,8 +18,7 @@
 #          other — posts the answer, and closes the issue once it is recorded. The push is made
 #          with GITHUB_TOKEN, which starts no workflow, so this starts pages.yml itself.
 #
-# Rulpane is checked out beside the tools, because they read a release with its code. While
-# Rulpane is private that takes RULPANE_READ_TOKEN, a token that can read it.
+# Rulpane is checked out beside the tools, because they read a release with its code.
 
 name: submit
 
@@ -53,7 +52,6 @@ jobs:
         with:
           repository: reny-develop/Rulpane
           path: rulpane
-          token: ${{ secrets.RULPANE_READ_TOKEN || github.token }}
 
       - uses: actions/setup-dotnet@v4
         with:
@@ -110,7 +108,6 @@ jobs:
         with:
           repository: reny-develop/Rulpane
           path: rulpane
-          token: ${{ secrets.RULPANE_READ_TOKEN || github.token }}
 
       - uses: actions/setup-dotnet@v4
         if: needs.read.outputs.verdict == 'passed'

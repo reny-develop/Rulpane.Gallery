@@ -96,8 +96,6 @@ The tools build against Rulpane: on a workstation the clone beside this one, in 
 ## Setting it up
 
 - **Pages**: Settings → Pages, Source "GitHub Actions"
-- **Rulpane**: while it is private, a secret `RULPANE_READ_TOKEN` holding a token that can read
-  `reny-develop/Rulpane`; once it is public, nothing
 - **main** accepts a push from `GITHUB_TOKEN`, which is how a release is recorded without a pull
   request. The label `submission` exists
 
