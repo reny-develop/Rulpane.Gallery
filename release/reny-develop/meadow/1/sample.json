@@ -1,0 +1,13 @@
+{
+  "$schema": "rulpane/paneset/v1",
+  "r": "scoreboard",
+  "v": "reny-develop/scoreboard-view@1",
+  "s": {
+    "players": [
+      "Ann",
+      "Ben",
+      "Cleo"
+    ],
+    "scores": []
+  }
+}
