@@ -1,0 +1,14 @@
+{
+  "$schema": "rulpane/paneset/v1",
+  "r": "packing-list",
+  "v": "reny-develop/packing-list-view@1",
+  "s": {
+    "items": [
+      "Passport",
+      "Phone charger",
+      "Toothbrush",
+      "Socks"
+    ],
+    "packed": []
+  }
+}
