@@ -1,9 +1,9 @@
 // Decides whether a view, a theme or a paneset can be recorded in the Gallery, and records it.
 //
 //   dotnet run --project tool/Admit -- read <issue body> --author <login> --out <folder>
-//                                      [--checkout <folder> --license <spdx> --members <orgs>] [--registry <folder>]
+//                                      [--checkout <folder> --license <spdx> --members <orgs>]
 //   dotnet run --project tool/Admit -- record <folder>
-//   dotnet run --project tool/Admit -- check [--registry <folder>]
+//   dotnet run --project tool/Admit -- check
 //
 // read     takes the submission an issue states, clones the repository at the commit it names
 //          (or reads --checkout, which is how the tests run it), asks GitHub what licence the
@@ -24,8 +24,8 @@
 //          not withheld in its sample again, with the Rulpane it was built against — so a change
 //          to Rulpane that would stop a published release is seen here first.
 //
-// --registry is a copy of the Registry's rule sets, as Rulpane's tool/Mirror writes it, for
-// rules that are one of them or hold one. Run from the top of this repository.
+// Rules that are one of the Registry's rule sets, or hold one, are read from the Registry and
+// nuget.org, where Rulpane reads them. Run from the top of this repository.
 
 using System.Diagnostics;
 using System.Net;
@@ -61,9 +61,9 @@ return positional switch
 
 static int Usage()
 {
-    Console.Error.WriteLine("usage: Admit read <issue body> --author <login> --out <folder> [--checkout <folder> --license <spdx> --members <orgs>] [--registry <folder>]");
+    Console.Error.WriteLine("usage: Admit read <issue body> --author <login> --out <folder> [--checkout <folder> --license <spdx> --members <orgs>]");
     Console.Error.WriteLine("       Admit record <folder>");
-    Console.Error.WriteLine("       Admit check [--registry <folder>]");
+    Console.Error.WriteLine("       Admit check");
     return 2;
 }
 
@@ -133,7 +133,7 @@ async Task<int> ReadAsync(string bodyFile)
             throw new Refusal(string.Join("\n\n", problems.Select(p => "- " + p)));
         }
 
-        using HttpClient origin = Origin.Client(options.GetValueOrDefault("registry"), ledger);
+        using HttpClient origin = Origin.Client(ledger);
         Trial.Seen? seen = await TryAsync(origin, submission.Kind, submission.Path, texts[Ledger.DocumentFile], submission.Sample, texts.GetValueOrDefault(Ledger.SampleFile));
 
         string sha256 = Ledger.Sha256(Path.Combine(checkout, submission.Path));
@@ -237,7 +237,7 @@ async Task<int> CheckAsync()
         }
     }
 
-    using HttpClient origin = Origin.Client(options.GetValueOrDefault("registry"), entries);
+    using HttpClient origin = Origin.Client(entries);
     foreach (Entry entry in entries)
     {
         string document = Path.Combine(entry.Folder, Ledger.DocumentFile);

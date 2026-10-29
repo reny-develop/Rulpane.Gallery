@@ -115,12 +115,12 @@ for whatever rules a link names, and stops the screen with what failed.
 
 The line is written into [`ledger/submitted.json`](../ledger/submitted.json), the copy under
 `release/`, the issue is answered and closed, and the pages are rebuilt. Rulpane opens the
-release once Rulpane is next deployed, which copies the Gallery beside it.
+release as soon as they are published, since it reads each release from the Gallery's site.
 
 **A release can be withheld.** One that is reported as misleading, or as somebody else's work,
 gets `"withheld"` on its line, with the reason. It stays on its page, marked; it is no longer
-offered, and links to it stop opening at Rulpane's next deploy — and so does every paneset that
-names it. Nothing else is ever removed, and a name is never reused.
+offered or served, and links to it stop opening as soon as the pages are published again — and
+so does every paneset that names it. Nothing else is ever removed, and a name is never reused.
 
 **Every release is run again every week**, on that week's Rulpane. A change to Rulpane that
 would stop one fails this repository's build before it reaches anybody.

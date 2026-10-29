@@ -1,19 +1,22 @@
 // Renders the Gallery as pages: where views, themes and panesets are found and submitted.
 //
-//   dotnet run --project tool/Site -- <folder> [--registry <folder>] [--shots <folder>] [--rulpane <url>] [--repository <owner/name>]
+//   dotnet run --project tool/Site -- <folder> [--shots <folder>] [--rulpane <url>] [--repository <owner/name>]
 //   dotnet run --project tool/Site -- --shots-to-take <file>
+//   dotnet run --project tool/Site -- --releases-to <folder>
 //
 // It reads ledger/submitted.json and the copies under release/, so the pages are a view of
 // those files rather than a second account of them, and the rule sets they open: those Rulpane
-// bundles and those in --registry, a copy of the Registry's rule sets as Rulpane's tool/Mirror
-// writes it. Rulpane copies releases out of this repository, never out of these pages. Run from
-// the top of the repository. It writes
+// bundles and those the Registry publishes, read where Rulpane reads them. Run from the top of
+// the repository. It writes
 //
 //   <folder>/index.html                         every name, what it is, its newest release
 //   <folder>/release/<owner>/<name>/index.html  one name: how to use it, every release, the document and its licence
+//   <folder>/release/<owner>/<name>/<n>.json    one release that is not withheld, as Rulpane reads it when a link names it
 //   <folder>/rules/index.html                   every rule set, and how much opens it
 //   <folder>/rules/<id>/index.html              one rule set: the views that fit it, its panesets, the samples tried with it
 //   <folder>/submit/index.html                  the form a submission is made from
+//   <folder>/llms.txt                           the same as text, for an AI: every name's newest release, where its
+//                                               document is and where each one it names is, and every rule set
 //
 // --rulpane is where the viewer is, for the links that open a release; --repository is this
 // repository on GitHub, where a submission is opened as an issue.
@@ -22,6 +25,10 @@
 // release of each name that a link opens, the picture's path and the fragment of that link,
 // tab-separated, which is what tool/Shot/shoot.mjs takes. --shots is the folder it wrote them to;
 // a release with a picture there is shown with it, and one without is shown without.
+//
+// --releases-to writes, instead, only the <n>.json of every release, under <folder>/release/: a
+// Rulpane served with them beside it, and told so, opens what this ledger holds before it is
+// published, which is how the pictures are taken.
 
 using System.Net;
 using System.Text;
@@ -45,10 +52,11 @@ for (int i = 0; i < args.Length; i++)
     }
 }
 
-if (positional.Count != (options.ContainsKey("shots-to-take") ? 0 : 1))
+if (positional.Count != (options.ContainsKey("shots-to-take") || options.ContainsKey("releases-to") ? 0 : 1))
 {
-    Console.Error.WriteLine("usage: Site <folder> [--registry <folder>] [--shots <folder>] [--rulpane <url>] [--repository <owner/name>]");
+    Console.Error.WriteLine("usage: Site <folder> [--shots <folder>] [--rulpane <url>] [--repository <owner/name>]");
     Console.Error.WriteLine("       Site --shots-to-take <file>");
+    Console.Error.WriteLine("       Site --releases-to <folder>");
     return 2;
 }
 
@@ -70,19 +78,25 @@ if (options.TryGetValue("shots-to-take", out string? list))
     return 0;
 }
 
+if (options.TryGetValue("releases-to", out string? beside))
+{
+    Console.Error.WriteLine($"{Serve(beside)} release(s) → {beside}");
+    return 0;
+}
+
 if (Directory.Exists(output))
 {
     Directory.Delete(output, recursive: true);
 }
 
 Directory.CreateDirectory(output);
+Serve(output);
 
 List<Entry> entries = Ledger.Read(Ledger.File);
-string? registry = options.GetValueOrDefault("registry");
 List<RuleSet> ruleSets;
-using (HttpClient origin = Origin.Client(registry, entries))
+using (HttpClient origin = Origin.Client(entries))
 {
-    ruleSets = await RuleSet.FindAsync(origin, registry, entries);
+    ruleSets = await RuleSet.FindAsync(origin, entries);
 }
 
 var names = entries.GroupBy(e => e.Id).OrderBy(g => g.Key, StringComparer.Ordinal).ToList();
@@ -125,6 +139,7 @@ File.WriteAllText(Path.Combine(output, "index.html"), Page("Rulpane Gallery", ""
     """));
 
 WriteRules();
+WriteText();
 
 Directory.CreateDirectory(Path.Combine(output, "submit"));
 File.WriteAllText(Path.Combine(output, "submit", "index.html"), Page("Submit to the Gallery", "../", Submit.Page(repository)));
@@ -166,6 +181,150 @@ void WriteRules()
         {rows}  </tbody>
         </table>
         """));
+}
+
+// The Gallery as one page of text, for an AI asked to make a Rulpane screen: every name's newest
+// release, where its document is, and where each document it names is, so that a whole working
+// one is copied and changed rather than written from nothing. What a paneset, a view or a theme
+// is, is Rulpane's to say, and an operation the Registry's: this page links both and says neither.
+void WriteText()
+{
+    Entry[] offered = [.. names.Select(n => n.Where(e => e.Withheld is null).MaxBy(e => e.Version)).OfType<Entry>()];
+    var text = new StringBuilder($"""
+        # Rulpane Gallery
+
+        > Views, themes and panesets for Rulpane that anybody can publish, each under a short name, and the rule sets they open. This is the Gallery as text: every name's newest release, its document, and the documents it names, so that one close to what is asked for can be copied whole and changed.
+
+        A release is recorded without anybody approving it, once a machine has read it: its words, its shape, and a run on the rules its author tried it with. Nobody reviews what it says; its author wrote every word of it. Built from the ledger at {builtAt}.
+
+        ## How a link names a release
+
+        As `<owner>/<name>@<version>`: a view in `v=`, a theme in `t=`, a paneset — rules, view, theme and where to start, as one document — in `p=`. The version counts that name's releases from 1, and a link never moves to a newer one. A paneset names a view or a theme the same way, in `v` or `t`.
+
+            {rulpane}#p=<owner>/<name>@<version>
+
+        How a paneset, a view and a theme are written, and how a link carries one, is Rulpane's to say: <{rulpane}llms.txt>. Rule sets are published to the Rulealize Registry, never here, and the operations they use are its to say: <https://reny-develop.github.io/Rulealize.Registry/llms.txt>.
+
+        Each document below is the copy the Gallery keeps, as its author committed it, byte for byte. A withheld release is left out: Rulpane opens none.
+
+
+        """);
+
+    foreach (string kind in (string[])["paneset", "view", "theme"])
+    {
+        text.Append($"## {(kind == "paneset" ? "Panesets: rules, view and where to start, each opening as it is" : kind == "view" ? "Views" : "Themes")}\n\n");
+        Entry[] these = [.. offered.Where(e => e.Kind == kind)];
+        if (these.Length == 0)
+        {
+            text.Append("None yet.\n\n");
+        }
+
+        foreach (Entry release in these)
+        {
+            string document = Read(release, Ledger.DocumentFile)!;
+            Paneset? paneset = kind == "paneset" ? Paneset.Parse(document) : null;
+            string? title = Parse(document)?["title"]?.GetValue<string>()
+                ?? (paneset?.View is string view && Released(view) is Entry named ? Parse(Read(named, Ledger.DocumentFile)!)?["title"]?.GetValue<string>() : null);
+            text.Append($"### {release.Reference}{(title is null ? "" : $" — {title}")}\n\n");
+            text.Append($"- {kind}, under {release.License}, from https://github.com/{release.Repository}\n");
+            text.Append($"- document: {Raw(release, Ledger.DocumentFile)}\n");
+            if (paneset is not null)
+            {
+                text.Append($"- r, the rules: {Named(paneset.Rules!, Source.Rules)}\n");
+                text.Append(paneset.View is string v ? $"- v, the view: {Named(v, Source.View)}\n" : "");
+                text.Append(paneset.Theme is string t ? $"- t, the theme: {Named(t, Source.Theme)}\n" : "");
+                text.Append(paneset.State is null ? "" : "- s, where it starts: in the document\n");
+                text.Append(paneset.Bind.Count == 0 ? "" : "- b, the rules' names for what the view reads: in the document\n");
+            }
+            else
+            {
+                string parts = string.Join(", ", Parts(kind, document));
+                text.Append($"- {(kind == "view" ? "reads" : "looks")}: {(parts.Length == 0 ? "—" : parts)}\n");
+            }
+
+            if (kind == "view")
+            {
+                RuleSet[] fits = [.. ruleSets.Where(r => r.Fits.Contains(release))];
+                text.Append(fits.Length == 0
+                    ? "- fits as it is: no rule set here; rules that keep what it reads under other names are matched to it by a paneset's `b`\n"
+                    : $"- fits as it is, with no `b`: {string.Join(", ", fits.Select(r => $"`{r.Tried}`"))}\n");
+            }
+
+            if (paneset is null && Read(release, Ledger.SampleFile) is string sample)
+            {
+                text.Append($"- its sample, the paneset it was tried in: {Raw(release, Ledger.SampleFile)}, whose r is {Named(Paneset.Parse(sample).Rules!, Source.Rules)}\n");
+            }
+
+            text.Append(Open(release) is string open ? $"- opens{(paneset is null ? " in its sample" : "")}: {open}\n\n" : "\n");
+        }
+    }
+
+    text.Append("""
+        ## By rule set
+
+        Every rule set Rulpane bundles or the Registry publishes, under the id it declares, and what here opens it. A view fits a rule set when Rulpane reads it against those rules with no `b` and they then play from their start, every position as the view expects.
+
+
+        """);
+    foreach (RuleSet ruleSet in ruleSets)
+    {
+        text.Append($"### {ruleSet.Id}\n\n{(ruleSet.Description is null ? "" : $"{ruleSet.Description}\n\n")}");
+        text.Append($"- r names it as {string.Join(", ", ruleSet.Names.Select(n => $"`{n}`"))}\n");
+        text.Append($"- document: {Named(ruleSet.Tried ?? ruleSet.Names[^1], Source.Rules)}\n");
+        List("views that fit it as they are", ruleSet.Fits.Select(v => $"{v.Reference}, opened by {rulpane}{Fragment.Build(("r", ruleSet.Tried), ("v", v.Reference))}"));
+        List("panesets for it", ruleSet.Panesets.Select(p => p.Release.Reference));
+        List("views and themes tried with it in their samples", ruleSet.Samples.Select(s => s.Bound ? $"{s.Release.Reference}, with `b`" : s.Release.Reference));
+        text.Append('\n');
+    }
+
+    File.WriteAllText(Path.Combine(output, "llms.txt"), text.ToString().ReplaceLineEndings("\n"));
+
+    void List(string heading, IEnumerable<string> items)
+    {
+        string[] all = [.. items];
+        text.Append(all.Length switch
+        {
+            0 => "",
+            1 => $"- {heading}: {all[0]}\n",
+            _ => $"- {heading}:\n{string.Concat(all.Select(i => $"  - {i}\n"))}",
+        });
+    }
+}
+
+// Each release that is not withheld, as Rulpane reads it from this site when a link names it. A
+// withheld one is not served, so it stops opening as soon as it is withheld.
+int Serve(string folder)
+{
+    Entry[] served = [.. Ledger.Read(Ledger.File).Where(e => e.Withheld is null)];
+    foreach (Entry release in served)
+    {
+        string file = Path.Combine(folder, "release", release.Id, $"{release.Version}.json");
+        Directory.CreateDirectory(Path.GetDirectoryName(file)!);
+        File.WriteAllText(file, Ledger.Served(release, File.ReadAllText(Path.Combine(release.Folder, Ledger.DocumentFile))).ToJsonString());
+    }
+
+    return served.Length;
+}
+
+// Where a file of a release's copy is served as it is: this repository, on GitHub.
+string Raw(Entry release, string file) => $"https://raw.githubusercontent.com/{repository}/main/{release.Folder}/{file}";
+
+// The release a link's value names, when it is recorded here and not withheld.
+Entry? Released(string value) => entries.FirstOrDefault(e => e.Reference == value && e.Withheld is null);
+
+// What r, v or t names, and where its document is: bundled with Rulpane; published to the
+// Registry, whose page for it says what it offers and which package holds it; recorded here;
+// or written in place.
+string Named(string value, Func<string, Source> read)
+{
+    Source source = read(value);
+    return source switch
+    {
+        { IsPacked: true } => "written in place, in the document",
+        { IsBundled: true } => $"`{value}`, bundled with Rulpane: {rulpane}{source.Folder}/{value}.json",
+        { IsRegistered: true } => $"`{value}`, published to the Registry: {new Uri(Addresses.Registry, $"ruleset/{source.Reference.Id}.html")}",
+        _ => Released(value) is Entry release ? $"`{value}`, recorded here: {Raw(release, Ledger.DocumentFile)}" : $"`{value}`, withheld or not recorded here",
+    };
 }
 
 string RulesPage(RuleSet ruleSet)
@@ -413,8 +572,15 @@ string Reads(string text)
 // One line on what it is: what a view expects, a theme's look, a paneset's parts.
 string What(string kind, string text)
 {
+    string[] all = Parts(kind, text);
+    return all.Length == 0 ? "—" : string.Join(" ", all.Select(a => $"<span class=\"chip mono\">{H(a)}</span>"));
+}
+
+// The same, as words: each of them is a chip on a page and a word in llms.txt.
+string[] Parts(string kind, string text)
+{
     JsonNode? root = Parse(text);
-    string[] all = kind switch
+    return kind switch
     {
         "view" when root?["expects"] is JsonNode expects => [
             .. (expects["projections"] as JsonObject ?? []).Select(p => $"{p.Key}: {p.Value}"),
@@ -423,7 +589,6 @@ string What(string kind, string text)
         "theme" => [.. new[] { "radius", "font", "density" }.Select(k => root?[k]?.ToString()).OfType<string>()],
         _ => [.. new[] { "r", "v", "t" }.Where(k => root?[k] is not null).Select(k => root![k] is JsonValue v ? $"{k}={v}" : $"{k}: written in place")],
     };
-    return all.Length == 0 ? "—" : string.Join(" ", all.Select(a => $"<span class=\"chip mono\">{H(a)}</span>"));
 }
 
 // Where a release's picture goes, under release/ in the pages and under the folder of --shots.

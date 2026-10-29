@@ -23,13 +23,13 @@ public sealed record RuleSet(string Id, string? Description, IReadOnlyList<strin
     public List<(Entry Release, bool Bound)> Samples { get; } = [];
 
     /// <summary>
-    /// Every rule set Rulpane bundles or the Registry copy in <paramref name="registry"/> holds,
+    /// Every rule set Rulpane bundles or the Registry publishes,
     /// and any other a release names, each with what opens it. A view fits a rule set when
     /// Rulpane's <see cref="View.Parse"/> reads it against the rules with no <c>b</c>, and the
     /// rules then play from their start, every position as the view expects — the trial a
     /// submission's sample is put through, with these rules instead.
     /// </summary>
-    public static async Task<List<RuleSet>> FindAsync(HttpClient origin, string? registry, IReadOnlyList<Entry> ledger)
+    public static async Task<List<RuleSet>> FindAsync(HttpClient origin, IReadOnlyList<Entry> ledger)
     {
         // Each name r can give, with the version its document says and the id it declares.
         var named = new List<(string Id, string Name, string Version, string? Description, bool Registered)>();
@@ -42,23 +42,22 @@ public sealed record RuleSet(string Id, string? Description, IReadOnlyList<strin
             }
         }
 
-        if (registry is not null)
+        // The Registry's, as Rulpane reads them: the versions it has not withheld.
+        var published = new HashSet<string>(StringComparer.Ordinal);
+        foreach (JsonNode? summary in JsonNode.Parse(await origin.GetStringAsync(new Uri(Addresses.Registry, "index.json")))!["ruleSets"]!.AsArray())
         {
-            foreach (JsonNode? entry in JsonNode.Parse(File.ReadAllText(Path.Combine(registry, "index.json")))!["ruleSets"]!.AsArray())
+            if (await Registry.EntryAsync(origin, summary!["id"]!.GetValue<string>()) is Registered entry)
             {
-                string id = entry!["id"]!.GetValue<string>();
-                foreach (JsonNode? version in entry["versions"]!.AsArray())
-                {
-                    named.Add((id, $"{id}@{version}", version!.GetValue<string>(), entry["description"]?.GetValue<string>(), true));
-                }
+                named.AddRange(entry.Versions.Select(version => (entry.Id, $"{entry.Id}@{version}", version, entry.Description, true)));
+                published.UnionWith(entry.Versions.Select(version => $"{entry.Id}@{version}"));
             }
         }
 
         // The newest release of each name, which is the one a page offers.
         Entry[] latest = [.. ledger.Where(e => e.Withheld is null).GroupBy(e => e.Id).Select(g => g.MaxBy(e => e.Version)!)];
 
-        // A Registry name that is not here yet (there is no copy of the Registry) still gets a
-        // page, so a paneset naming it is found; nothing could be tried against it.
+        // A Registry name it does not have (withheld, or never published) still gets a page, so a
+        // paneset naming it is found; nothing could be tried against it.
         foreach (Entry release in latest)
         {
             if (RulesOf(release) is string rules && Source.Rules(rules).IsRegistered && !named.Any(n => n.Name == rules))
@@ -70,8 +69,7 @@ public sealed record RuleSet(string Id, string? Description, IReadOnlyList<strin
         var found = new List<RuleSet>();
         foreach (var group in named.GroupBy(n => n.Id, StringComparer.OrdinalIgnoreCase).OrderBy(g => g.Key, StringComparer.OrdinalIgnoreCase))
         {
-            var readable = group.Where(n => !n.Registered || registry is not null).ToList();
-            var newest = readable
+            var newest = group.Where(n => !n.Registered || published.Contains(n.Name))
                 .OrderBy(n => System.Version.TryParse(n.Version, out var v) ? v : new System.Version())
                 .ThenBy(n => n.Registered)
                 .LastOrDefault();

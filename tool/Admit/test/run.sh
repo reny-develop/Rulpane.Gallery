@@ -4,15 +4,13 @@
 # then records the ones that pass into an empty ledger, reads the cases that need a ledger, and
 # checks it.
 #
-#   bash tool/Admit/test/run.sh [<registry>]      (from the top of the repository)
+#   bash tool/Admit/test/run.sh      (from the top of the repository)
 #
-# The cases are written by cases.sh. <registry> is a copy of the Registry's rule sets, for the
-# check to run what holds one; none of the cases needs it.
+# The cases are written by cases.sh.
 
 set -uo pipefail
 here=$(cd "$(dirname "$0")" && pwd)
 root=$(cd "$here/../../.." && pwd)
-registry=${1:+--registry $(cd "$1" && pwd)}
 work=$(mktemp -d)
 trap 'rm -rf "$work"' EXIT
 
@@ -62,5 +60,5 @@ read_case uses-gallery
 read_case kind-taken
 admit record "$work/uses-gallery" >/dev/null || { echo "✕ uses-gallery was not recorded"; failed=1; }
 
-admit check $registry || failed=1
+admit check || failed=1
 exit $failed

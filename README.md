@@ -39,14 +39,14 @@ holds the copy: `document.json` as its author committed it, to the byte, the rep
 `LICENSE` at that commit, and `sample.json`. **A release stays openable when its repository is
 deleted or rewritten**, which is why the copy is in git rather than fetched.
 
-Rulpane copies the releases out of a checkout of this repository on every deploy — its
-`tool/Mirror --gallery` — holding each copy to its line's SHA-256 and leaving out what is
-withheld. The pages are not where Rulpane reads anything from, so their being down or behind
-changes what can be found, never what a link opens.
+The site serves each release that is not withheld as `release/<owner>/<name>/<n>.json` — the
+document and where it was read from — and that is where Rulpane reads it, as a link naming it is
+opened. A release is there to open as soon as the site is published after it is recorded.
 
 A release that has to stop opening — one reported as misleading, say — gets
 `"withheld": "<why>"` on its line. It stays in the ledger and on its page, marked; it is no
-longer offered, and Rulpane stops opening it, and every paneset that names it, at its next deploy.
+longer offered or served, and Rulpane stops opening it, and every paneset that names it, as soon
+as the site is published again.
 
 ## The pages and the checks
 
@@ -58,9 +58,15 @@ are**, which Rulpane reads against those rules with no `b` and plays from their 
 position as the view expects; the panesets that name it; and the views and themes tried with it
 in their samples.
 
+The same is written as text for an AI, at
+[`llms.txt`](https://reny-develop.github.io/Rulpane.Gallery/llms.txt): every name's newest release
+that is not withheld, the URL of its document, and the URL of each document it names — its rule
+set, its view, its theme — so that a whole working one can be copied and changed. How those
+documents are written is left to Rulpane's own `llms.txt`, which it links.
+
 Each name is shown with a **picture of the screen its newest release opens** — a paneset as it
 is, a view or a theme in its sample — taken by [`tool/Shot`](tool/Shot/shoot.mjs) in headless
-Chrome, from a Rulpane served on the same machine with this ledger mirrored beside it. A release
+Chrome, from a Rulpane served on the same machine with this ledger's releases beside it. A release
 whose screen does not come up has no picture, and its page says nothing about one.
 
 [`pages.yml`](.github/workflows/pages.yml) runs on every push and once a week: every case in
@@ -71,23 +77,25 @@ first, and publishes nothing.
 
 ```sh
 bash tool/Admit/test/run.sh
-dotnet run --project ../Rulpane/tool/Mirror -- work/registry   # for samples that use the Registry
-dotnet run --project tool/Admit -- check --registry work/registry
-dotnet run --project tool/Site -- work/site --registry work/registry
+dotnet run --project tool/Admit -- check
+dotnet run --project tool/Site -- work/site
 ```
 
-The pictures take a Rulpane to open the releases in, with the Registry and this ledger beside it,
-served from anywhere — the shot list's fragments are opened against the URL given — and Node 22
-or later:
+A sample whose rules are the Registry's, or hold one, is read from the Registry and nuget.org,
+as Rulpane reads it, so these need the network.
+
+The pictures take a Rulpane to open the releases in, with this ledger's releases beside it and an
+`appsettings.json` telling it to read the Gallery there, served from anywhere — the shot list's
+fragments are opened against the URL given — and Node 22 or later:
 
 ```sh
 dotnet publish ../Rulpane/src/Rulpane.Viewer -c Release -o work/viewer
-cp -r work/registry work/viewer/wwwroot/registry
-dotnet run --project ../Rulpane/tool/Mirror -- --gallery work/viewer/wwwroot/gallery .
+dotnet run --project tool/Site -- --releases-to work/viewer/wwwroot/gallery
+echo '{ "Gallery": "gallery/" }' > work/viewer/wwwroot/appsettings.json
 python3 -m http.server 5080 -d work/viewer/wwwroot &
 dotnet run --project tool/Site -- --shots-to-take work/shots.tsv
 node tool/Shot/shoot.mjs work/shots.tsv http://127.0.0.1:5080/ work/shots   # Chrome, or $CHROME
-dotnet run --project tool/Site -- work/site --registry work/registry --shots work/shots
+dotnet run --project tool/Site -- work/site --shots work/shots
 ```
 
 The tools build against Rulpane: on a workstation the clone beside this one, in CI a checkout in

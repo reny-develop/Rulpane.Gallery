@@ -1,5 +1,5 @@
 // Takes the picture of each release that the Gallery's pages show: the screen its "Open it" link
-// opens, in a Rulpane served from this machine with this Gallery mirrored beside it.
+// opens, in a Rulpane served from this machine with this Gallery's releases beside it.
 //
 //   node tool/Shot/shoot.mjs <list> <viewer> <folder>
 //

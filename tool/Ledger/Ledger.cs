@@ -114,10 +114,10 @@ public static class Ledger
         Convert.ToHexStringLower(SHA256.HashData(System.IO.File.ReadAllBytes(path)));
 
     /// <summary>
-    /// A release as Rulpane's <c>tool/Mirror --gallery</c> writes it beside the viewer: the
-    /// document as its author committed it, and where it was read from.
+    /// A release as the Gallery's site serves it at <c>release/&lt;owner&gt;/&lt;name&gt;/&lt;version&gt;.json</c>,
+    /// where Rulpane reads it: the document as its author committed it, and where it was read from.
     /// </summary>
-    public static JsonObject Mirrored(Entry e, string text) => new()
+    public static JsonObject Served(Entry e, string text) => new()
     {
         ["id"] = e.Id,
         ["version"] = e.Version,
