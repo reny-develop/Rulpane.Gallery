@@ -1,0 +1,13 @@
+{
+  "$schema": "rulpane/paneset/v1",
+  "r": "packing-list",
+  "s": {
+    "items": [
+      "Passport",
+      "Phone charger",
+      "Toothbrush",
+      "Socks"
+    ],
+    "packed": []
+  }
+}
