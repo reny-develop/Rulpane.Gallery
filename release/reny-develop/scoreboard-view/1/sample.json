@@ -1,0 +1,12 @@
+{
+  "$schema": "rulpane/paneset/v1",
+  "r": "scoreboard",
+  "s": {
+    "players": [
+      "Ann",
+      "Ben",
+      "Cleo"
+    ],
+    "scores": []
+  }
+}
