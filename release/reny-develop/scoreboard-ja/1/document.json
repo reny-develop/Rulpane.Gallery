@@ -1,0 +1,13 @@
+{
+  "$schema": "rulpane/paneset/v1",
+  "r": "scoreboard",
+  "v": "reny-develop/scoreboard-ja-view@1",
+  "s": {
+    "players": [
+      "あおい",
+      "けんた",
+      "みさき"
+    ],
+    "scores": []
+  }
+}
