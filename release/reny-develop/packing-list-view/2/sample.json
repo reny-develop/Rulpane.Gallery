@@ -1,0 +1,13 @@
+{
+  "$schema": "rulpane/paneset/v1",
+  "r": "Rulealize.RuleSet.PackingList@1.0.0",
+  "s": {
+    "items": [
+      "Passport",
+      "Phone charger",
+      "Toothbrush",
+      "Socks"
+    ],
+    "packed": []
+  }
+}
