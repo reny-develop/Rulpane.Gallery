@@ -1,0 +1,5 @@
+{
+  "$schema": "rulpane/paneset/v1",
+  "r": "Rulealize.RuleSet.Reversi@1.0.0",
+  "v": "reny-develop/reversi-view@2"
+}
