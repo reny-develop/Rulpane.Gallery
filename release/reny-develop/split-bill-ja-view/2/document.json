@@ -1,0 +1,129 @@
+{
+  "$schema": "rulealize/view/v1",
+  "ruleSet": "Rulealize.RuleSet.SplitBill@1",
+  "title": "割り勘",
+  "layout": [
+    {
+      "c": "stats",
+      "items": [
+        {
+          "label": "合計",
+          "bind": "summary.total"
+        },
+        {
+          "label": "1 人あたり",
+          "bind": "summary.share"
+        },
+        {
+          "label": "人数",
+          "bind": "summary.people"
+        }
+      ]
+    },
+    {
+      "c": "table",
+      "title": "精算",
+      "bind": "balances",
+      "columns": [
+        {
+          "key": "name",
+          "label": "名前"
+        },
+        {
+          "key": "paid",
+          "label": "立て替えた"
+        },
+        {
+          "key": "pays",
+          "label": "払う"
+        },
+        {
+          "key": "receives",
+          "label": "受け取る"
+        }
+      ]
+    },
+    {
+      "c": "actions",
+      "title": "立て替えを記録する",
+      "inputs": [
+        "pay"
+      ],
+      "as": "select"
+    },
+    {
+      "c": "table",
+      "title": "立て替えの記録",
+      "bind": "payments",
+      "columns": [
+        {
+          "key": "who",
+          "label": "誰が"
+        },
+        {
+          "key": "what",
+          "label": "何に"
+        },
+        {
+          "key": "amount",
+          "label": "金額"
+        }
+      ]
+    },
+    {
+      "c": "actions",
+      "title": "メンバーを足す",
+      "inputs": [
+        "join"
+      ]
+    },
+    {
+      "c": "actions",
+      "title": "名前を変える",
+      "inputs": [
+        "rename"
+      ]
+    },
+    {
+      "c": "actions",
+      "title": "メンバーを外す",
+      "inputs": [
+        "leave"
+      ]
+    },
+    {
+      "c": "actions",
+      "title": "記録を間違えたら",
+      "inputs": [
+        "undo"
+      ]
+    },
+    {
+      "c": "actions",
+      "title": "全部消して始める",
+      "inputs": [
+        "clear"
+      ]
+    }
+  ],
+  "names": {
+    "inputs": {
+      "join": "足す",
+      "pay": "記録する",
+      "undo": "最後の記録を取り消す",
+      "leave": "外す",
+      "clear": "メンバーと記録を全部消す",
+      "rename": "変える"
+    },
+    "params": {
+      "name": "名前",
+      "who": "誰が",
+      "what": "何に",
+      "amount": "金額",
+      "to": "新しい名前"
+    },
+    "codes": {
+      "name.taken": "その名前の人はもういます。"
+    }
+  }
+}
