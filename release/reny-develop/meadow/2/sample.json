@@ -1,0 +1,13 @@
+{
+  "$schema": "rulpane/paneset/v1",
+  "r": "Rulealize.RuleSet.Scoreboard@1.0.0",
+  "v": "reny-develop/scoreboard-view@2",
+  "s": {
+    "players": [
+      "Ann",
+      "Ben",
+      "Cleo"
+    ],
+    "scores": []
+  }
+}
