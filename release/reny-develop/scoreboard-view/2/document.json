@@ -1,0 +1,92 @@
+{
+  "$schema": "rulealize/view/v1",
+  "ruleSet": "Rulealize.RuleSet.Scoreboard@1",
+  "title": "Scoreboard",
+  "layout": [
+    {
+      "c": "table",
+      "title": "Standings",
+      "bind": "standings",
+      "columns": [
+        {
+          "key": "leading",
+          "label": ""
+        },
+        {
+          "key": "player",
+          "label": "Player"
+        },
+        {
+          "key": "rounds",
+          "label": "Scores"
+        },
+        {
+          "key": "total",
+          "label": "Total"
+        }
+      ]
+    },
+    {
+      "c": "actions",
+      "title": "Enter a score",
+      "inputs": [
+        "score"
+      ],
+      "as": "select"
+    },
+    {
+      "c": "actions",
+      "title": "Add a player",
+      "inputs": [
+        "join"
+      ]
+    },
+    {
+      "c": "actions",
+      "title": "Change a name",
+      "inputs": [
+        "rename"
+      ]
+    },
+    {
+      "c": "actions",
+      "title": "Remove a player",
+      "inputs": [
+        "leave"
+      ]
+    },
+    {
+      "c": "actions",
+      "title": "Entered one wrong?",
+      "inputs": [
+        "undo"
+      ]
+    },
+    {
+      "c": "actions",
+      "title": "Start again with nobody",
+      "inputs": [
+        "clear"
+      ]
+    }
+  ],
+  "names": {
+    "inputs": {
+      "score": "Enter",
+      "join": "Add",
+      "undo": "Take back the last score",
+      "leave": "Remove",
+      "clear": "Clear every player and score",
+      "rename": "Change"
+    },
+    "params": {
+      "player": "Player",
+      "points": "Points",
+      "name": "Name",
+      "to": "New name"
+    },
+    "codes": {
+      "name.taken": "Someone has that name already."
+    }
+  }
+}
