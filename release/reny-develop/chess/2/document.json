@@ -1,0 +1,5 @@
+{
+  "$schema": "rulpane/paneset/v1",
+  "r": "Rulealize.RuleSet.Chess@1.0.0",
+  "v": "reny-develop/chess-view@2"
+}
