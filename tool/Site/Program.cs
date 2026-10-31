@@ -144,6 +144,7 @@ WriteText();
 Directory.CreateDirectory(Path.Combine(output, "submit"));
 File.WriteAllText(Path.Combine(output, "submit", "index.html"), Page("Submit to the Gallery", "../", Submit.Page(repository)));
 File.WriteAllText(Path.Combine(output, "style.css"), Style.Css);
+File.WriteAllText(Path.Combine(output, "favicon.svg"), Icon.Svg);
 File.WriteAllText(Path.Combine(output, ".nojekyll"), "");
 
 Console.Error.WriteLine($"{names.Count} name(s), {entries.Count} release(s), {ruleSets.Count} rule set(s) → {output}");
@@ -626,6 +627,7 @@ string Page(string title, string root, string body) => $"""
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{H(title)}</title>
+    <link rel="icon" href="{root}favicon.svg" type="image/svg+xml">
     <link rel="stylesheet" href="{root}style.css">
     </head>
     <body>
