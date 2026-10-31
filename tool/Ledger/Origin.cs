@@ -32,6 +32,9 @@ public sealed class Origin(string viewer, IReadOnlyList<Entry> ledger) : Delegat
             .Select(f => Path.GetFileNameWithoutExtension(f)!)
             .Order(StringComparer.Ordinal);
 
+    /// <summary>Where the Rulpane checkout keeps what the viewer serves: its bundled documents, and the fonts the Gallery's pages share with it.</summary>
+    public static string Served => Path.Combine(RulpaneRoot, "src", "Rulpane.Viewer", "wwwroot");
+
     /// <summary>The Rulpane checkout this tool was built against, whose bundled documents a sample may name.</summary>
     private static string RulpaneRoot =>
         typeof(Origin).Assembly.GetCustomAttributes<AssemblyMetadataAttribute>().Single(a => a.Key == "RulpaneRoot").Value!;

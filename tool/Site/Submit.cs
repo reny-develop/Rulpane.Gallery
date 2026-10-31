@@ -12,9 +12,12 @@ namespace Rulpane.Gallery;
 public static class Submit
 {
     public static string Page(string repository) => $$"""
-        <p class="crumb"><a href="../">Gallery</a></p>
+        <p class="crumb"><a href="../">Gallery</a> <span>/</span> Submit</p>
         <h1>Submit to the Gallery</h1>
         <p class="lead">A view, a theme or a paneset is read out of a public repository of yours or your organisation's, at one commit, and recorded once a machine has read it. Nobody approves it, and nobody reviews what it says.</p>
+        <div class="submit">
+        <div>
+        <h2>What it is held to</h2>
         <ul>
           <li>It is named under your GitHub account, and the repository is yours — or, for an organisation's repository, it is named under the organisation, and you are a public member of it. A name is one kind of thing for good.</li>
           <li>The repository is under a licence that lets anybody keep and serve a copy: MIT, MIT-0, 0BSD, ISC, BSD-2-Clause, BSD-3-Clause, Apache-2.0, Unlicense, CC0-1.0 or CC-BY-4.0. The Gallery keeps one.</li>
@@ -22,6 +25,7 @@ public static class Submit
           <li>It runs: a paneset as it is, a view in the sample you name — a paneset with everything but <code>v</code> — and a theme, if you name a sample, in one with everything but <code>t</code>. From the start, for up to 32 positions, each one as the view expects.</li>
         </ul>
         <p>The whole of it is the <a href="https://github.com/{{WebUtility.HtmlEncode(repository)}}/blob/main/doc/policy.md">policy</a>.</p>
+        </div>
         <form id="submit" novalidate>
           <label>Kind
             <select id="kind"><option>View</option><option>Theme</option><option>Paneset</option></select></label>
@@ -36,8 +40,9 @@ public static class Submit
           <label>Sample <span class="muted">— a paneset in the repository, without the part you are submitting: needed for a view, optional for a theme, none for a paneset</span>
             <input id="sample" placeholder="samples/kanban.json" autocomplete="off"></label>
           <ul id="problems" class="problems" hidden></ul>
-          <button type="submit" class="button">Open the issue on GitHub</button>
+          <button type="submit" class="button primary">Open the issue on GitHub</button>
         </form>
+        </div>
         <script>
         const form = document.getElementById("submit");
         const problems = document.getElementById("problems");

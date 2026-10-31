@@ -12,11 +12,10 @@
 //   <folder>/index.html                         every name, what it is, its newest release
 //   <folder>/release/<owner>/<name>/index.html  one name: how to use it, every release, the document and its licence
 //   <folder>/release/<owner>/<name>/<n>.json    one release that is not withheld, as Rulpane reads it when a link names it
-//   <folder>/rules/index.html                   every rule set, and how much opens it
-//   <folder>/rules/<id>/index.html              one rule set: the views that fit it, its panesets, the samples tried with it
 //   <folder>/submit/index.html                  the form a submission is made from
+//   <folder>/fonts/                             Rulpane's own fonts, copied from its checkout, so the pages look as it does
 //   <folder>/llms.txt                           the same as text, for an AI: every name's newest release, where its
-//                                               document is and where each one it names is, and every rule set
+//                                               document is and where each one it names is
 //
 // --rulpane is where the viewer is, for the links that open a release; --repository is this
 // repository on GitHub, where a submission is opened as an issue.
@@ -65,6 +64,9 @@ string rulpane = options.GetValueOrDefault("rulpane", "https://reny-develop.gith
 string repository = options.GetValueOrDefault("repository", "reny-develop/Rulpane.Gallery");
 string builtAt = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ");
 
+// The kinds, in the order the index shows them and its filter offers them.
+string[] Shown = ["paneset", "view", "theme"];
+
 var lenient = new JsonDocumentOptions { CommentHandling = JsonCommentHandling.Skip, AllowTrailingCommas = true };
 var relaxed = new JsonSerializerOptions { WriteIndented = true, Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping };
 string? shots = options.GetValueOrDefault("shots");
@@ -102,43 +104,51 @@ using (HttpClient origin = Origin.Client(entries))
 var names = entries.GroupBy(e => e.Id).OrderBy(g => g.Key, StringComparer.Ordinal).ToList();
 var rows = new StringBuilder();
 
-foreach (var name in names)
+// Panesets first, which open as they are, then views, then themes, each by name.
+foreach (var name in names.OrderBy(n => Array.IndexOf(Shown, n.First().Kind)).ThenBy(n => n.Key, StringComparer.Ordinal))
 {
     Entry[] releases = [.. name.OrderBy(e => e.Version)];
     Entry? latest = releases.LastOrDefault(e => e.Withheld is null);
     string folder = Path.Combine(output, "release", name.Key);
     Directory.CreateDirectory(folder);
     File.WriteAllText(Path.Combine(folder, "index.html"), Page(name.Key, "../../../", NamePage(name.Key, releases, latest)));
-
-    string? text = latest is null ? null : Read(latest, Ledger.DocumentFile);
-    string? title = text is null ? null : Parse(text)?["title"]?.GetValue<string>();
-    string? picture = latest is null ? null : Picture(latest);
-    rows.Append($"""
-        <li class="card">
-          <a class="shot" href="release/{name.Key}/" tabindex="-1">{(picture is null ? $"<span class=\"none\">{H(releases[0].Kind)}</span>" : $"<img src=\"release/{picture}\" alt=\"\" width=\"640\" height=\"400\" loading=\"lazy\">")}</a>
-          <div class="about">
-            <a class="mono name" href="release/{name.Key}/">{H(name.Key)}</a>
-            <p><span class="chip">{H(releases[0].Kind)}</span>{(latest is null ? "<span class=\"chip danger\">withheld</span>" : "")}{H(title ?? "")}</p>
-            <p>{(text is null ? "" : What(releases[0].Kind, text))}</p>
-            <p class="muted mono">{(latest is null ? "" : $"@{latest.Version} · ")}{H((latest ?? releases[^1]).License)}</p>
-          </div>
-        </li>
-
-        """);
+    rows.Append(Card(latest ?? releases[^1], withheld: latest is null));
 }
 
+RuleSet[] filtered = [.. ruleSets.Where(r => r.Fits.Count + r.Panesets.Count + r.Samples.Count > 0)];
 File.WriteAllText(Path.Combine(output, "index.html"), Page("Rulpane Gallery", "", $"""
-    <h1>Rulpane Gallery</h1>
-    <p class="lead">Views, themes and panesets for <a href="{rulpane}">Rulpane</a> that anybody can publish. A link names one as <span class="mono">&lt;owner&gt;/&lt;name&gt;@&lt;version&gt;</span>: a view in <span class="mono">v=</span>, a theme in <span class="mono">t=</span>, a paneset — rules, view, theme and where to start, as one document — in <span class="mono">p=</span>.</p>
-    <p>A release is recorded without anybody approving it, once a machine has read it: its words, its shape, and a run on the rules its author tried it with. <strong>Nobody reviews what it says.</strong> Rule sets are published to the <a href="https://github.com/reny-develop/Rulealize.Registry">Rulealize Registry</a>, and named from here. <a href="submit/">Submit one</a>.</p>
-    <p>Have rules, and want a screen for them? <a href="rules/">Look them up by rule set</a>: the views that fit each one as it is, and the panesets made for it.</p>
+    <section class="hero">
+      <div>
+        <h1>Screens for Rulpane, ready to open</h1>
+        <p class="lead">Panesets, views and themes for <a href="{rulpane}">Rulpane</a> that anybody can publish. Open one as it is, copy its link, or take one close to what you want and change it.</p>
+      </div>
+      <p class="actions"><a class="button" href="{Addresses.Registry}">Find rules in the Registry{Icon.Line("out")}</a><a class="button primary" href="submit/">Submit yours</a></p>
+    </section>
+    <p class="notice">{Icon.Line("info", 16)}<span>Each release is recorded once a machine has read it and run it on the rules its author tried it with. <strong>Nobody reviews what it says</strong> — its author wrote every word. Rule sets are published to the <a href="{Addresses.Registry}">Rulealize Registry</a>, and named from here.</span></p>
     {(names.Count == 0 ? "<p class=\"muted\">Nothing has been submitted yet.</p>" : $"""
-    <ul class="cards">
+    <div class="filters" id="filters" hidden>
+      <div class="row">
+        <label class="search">{Icon.Line("search")}<input type="search" id="q" placeholder="Search by name or rules" aria-label="Search by name or rules" autocomplete="off"></label>
+        <div class="segment" role="group" aria-label="Kind">
+          <button type="button" data-kind="" aria-pressed="true">All <span class="count">{names.Count}</span></button>
+          {string.Concat(Shown.Select(k => $"<button type=\"button\" data-kind=\"{k}\" aria-pressed=\"false\">{Plural(k)} <span class=\"count\">{names.Count(n => n.First().Kind == k)}</span></button>"))}
+        </div>
+      </div>
+      <div class="row pills" role="group" aria-label="Rules">
+        <span class="label">Rules</span>
+        <button type="button" class="pill" data-rules="" aria-pressed="true">Any</button>
+        {string.Concat(filtered.Select(r => $"<button type=\"button\" class=\"pill\" data-rules=\"{H(r.Id)}\" aria-pressed=\"false\">{H(r.Id)}</button>"))}
+      </div>
+    </div>
+    <ul class="cards" id="cards">
     {rows}</ul>
+    <p class="muted" id="nothing" hidden>Nothing here matches. Look for rules in the <a href="{Addresses.Registry}">Registry</a>, or <a href="submit/">submit a screen for them</a>.</p>
+    <script>
+    {Script.Filter}
+    </script>
     """)}
     """));
 
-WriteRules();
 WriteText();
 
 Directory.CreateDirectory(Path.Combine(output, "submit"));
@@ -146,43 +156,14 @@ File.WriteAllText(Path.Combine(output, "submit", "index.html"), Page("Submit to 
 File.WriteAllText(Path.Combine(output, "style.css"), Style.Css);
 File.WriteAllText(Path.Combine(output, "favicon.svg"), Icon.Svg);
 File.WriteAllText(Path.Combine(output, ".nojekyll"), "");
+Directory.CreateDirectory(Path.Combine(output, "fonts"));
+foreach (string font in Directory.EnumerateFiles(Path.Combine(Origin.Served, "fonts")))
+{
+    File.Copy(font, Path.Combine(output, "fonts", Path.GetFileName(font)));
+}
 
 Console.Error.WriteLine($"{names.Count} name(s), {entries.Count} release(s), {ruleSets.Count} rule set(s) → {output}");
 return 0;
-
-void WriteRules()
-{
-    var rows = new StringBuilder();
-    foreach (RuleSet ruleSet in ruleSets)
-    {
-        string folder = Path.Combine(output, "rules", ruleSet.Id);
-        Directory.CreateDirectory(folder);
-        File.WriteAllText(Path.Combine(folder, "index.html"), Page(ruleSet.Id, "../../", RulesPage(ruleSet)));
-        rows.Append($"""
-            <tr>
-              <td><a class="mono" href="{H(ruleSet.Id)}/">{H(ruleSet.Id)}</a></td>
-              <td>{H(ruleSet.Description ?? "")}</td>
-              <td class="mono">{ruleSet.Fits.Count}</td>
-              <td class="mono">{ruleSet.Panesets.Count}</td>
-              <td class="mono">{ruleSet.Samples.Count}</td>
-            </tr>
-
-            """);
-    }
-
-    Directory.CreateDirectory(Path.Combine(output, "rules"));
-    File.WriteAllText(Path.Combine(output, "rules", "index.html"), Page("By rule set — Rulpane Gallery", "../", $"""
-        <p class="crumb"><a href="../">Gallery</a></p>
-        <h1>By rule set</h1>
-        <p class="lead">Every rule set Rulpane bundles or the Registry publishes, under the id it declares, and what here opens it.</p>
-        <p>A view <strong>fits</strong> a rule set when Rulpane reads it against those rules with no <span class="mono">b</span> — everything it reads is a projection, a field or an input they have, by that name — and they then play from their start, every position as the view expects. A view that reads other names may still show them through a paneset's <span class="mono">b</span>: the samples tried with a rule set are where to find one.</p>
-        <table>
-          <thead><tr><th>Rule set</th><th>What it is</th><th>Views that fit</th><th>Panesets</th><th>Samples</th></tr></thead>
-          <tbody>
-        {rows}  </tbody>
-        </table>
-        """));
-}
 
 // The Gallery as one page of text, for an AI asked to make a Rulpane screen: every name's newest
 // release, where its document is, and where each document it names is, so that a whole working
@@ -194,7 +175,7 @@ void WriteText()
     var text = new StringBuilder($"""
         # Rulpane Gallery
 
-        > Views, themes and panesets for Rulpane that anybody can publish, each under a short name, and the rule sets they open. This is the Gallery as text: every name's newest release, its document, and the documents it names, so that one close to what is asked for can be copied whole and changed.
+        > Views, themes and panesets for Rulpane that anybody can publish, each under a short name. This is the Gallery as text: every name's newest release, its document, and the documents it names, so that one close to what is asked for can be copied whole and changed.
 
         A release is recorded without anybody approving it, once a machine has read it: its words, its shape, and a run on the rules its author tried it with. Nobody reviews what it says; its author wrote every word of it. Built from the ledger at {builtAt}.
 
@@ -204,7 +185,7 @@ void WriteText()
 
             {rulpane}#p=<owner>/<name>@<version>
 
-        How a paneset, a view and a theme are written, and how a link carries one, is Rulpane's to say: <{rulpane}llms.txt>. Rule sets are published to the Rulealize Registry, never here, and the operations they use are its to say: <https://reny-develop.github.io/Rulealize.Registry/llms.txt>.
+        How a paneset, a view and a theme are written, and how a link carries one, is Rulpane's to say: <{rulpane}llms.txt>. Rule sets are published to the Rulealize Registry, never here, and are looked for there, as are the operations they use: <https://reny-develop.github.io/Rulealize.Registry/llms.txt>. A screen for a rule set is found below by its id: a paneset names its rules in r, a view says which rule sets it fits as it is, and a view or a theme names the rules of the sample it was tried in.
 
         Each document below is the copy the Gallery keeps, as its author committed it, byte for byte. A withheld release is left out: Rulpane opens none.
 
@@ -224,9 +205,7 @@ void WriteText()
         {
             string document = Read(release, Ledger.DocumentFile)!;
             Paneset? paneset = kind == "paneset" ? Paneset.Parse(document) : null;
-            string? title = Parse(document)?["title"]?.GetValue<string>()
-                ?? (paneset?.View is string view && Released(view) is Entry named ? Parse(Read(named, Ledger.DocumentFile)!)?["title"]?.GetValue<string>() : null);
-            text.Append($"### {release.Reference}{(title is null ? "" : $" — {title}")}\n\n");
+            text.Append($"### {release.Reference}\n\n");
             text.Append($"- {kind}, under {release.License}, from https://github.com/{release.Repository}\n");
             text.Append($"- document: {Raw(release, Ledger.DocumentFile)}\n");
             if (paneset is not null)
@@ -260,36 +239,7 @@ void WriteText()
         }
     }
 
-    text.Append("""
-        ## By rule set
-
-        Every rule set Rulpane bundles or the Registry publishes, under the id it declares, and what here opens it. A view fits a rule set when Rulpane reads it against those rules with no `b` and they then play from their start, every position as the view expects.
-
-
-        """);
-    foreach (RuleSet ruleSet in ruleSets)
-    {
-        text.Append($"### {ruleSet.Id}\n\n{(ruleSet.Description is null ? "" : $"{ruleSet.Description}\n\n")}");
-        text.Append($"- r names it as {string.Join(", ", ruleSet.Names.Select(n => $"`{n}`"))}\n");
-        text.Append($"- document: {Named(ruleSet.Tried ?? ruleSet.Names[^1], Source.Rules)}\n");
-        List("views that fit it as they are", ruleSet.Fits.Select(v => $"{v.Reference}, opened by {rulpane}{Fragment.Build(("r", ruleSet.Tried), ("v", v.Reference))}"));
-        List("panesets for it", ruleSet.Panesets.Select(p => p.Release.Reference));
-        List("views and themes tried with it in their samples", ruleSet.Samples.Select(s => s.Bound ? $"{s.Release.Reference}, with `b`" : s.Release.Reference));
-        text.Append('\n');
-    }
-
     File.WriteAllText(Path.Combine(output, "llms.txt"), text.ToString().ReplaceLineEndings("\n"));
-
-    void List(string heading, IEnumerable<string> items)
-    {
-        string[] all = [.. items];
-        text.Append(all.Length switch
-        {
-            0 => "",
-            1 => $"- {heading}: {all[0]}\n",
-            _ => $"- {heading}:\n{string.Concat(all.Select(i => $"  - {i}\n"))}",
-        });
-    }
 }
 
 // Each release that is not withheld, as Rulpane reads it from this site when a link names it. A
@@ -328,117 +278,38 @@ string Named(string value, Func<string, Source> read)
     };
 }
 
-string RulesPage(RuleSet ruleSet)
-{
-    var page = new StringBuilder($"""
-        <p class="crumb"><a href="../../">Gallery</a> / <a href="../">By rule set</a></p>
-        <h1 class="mono">{H(ruleSet.Id)}</h1>
-        {(ruleSet.Description is null ? "" : $"<p class=\"lead\">{H(ruleSet.Description)}</p>")}
-        <p>A link names it in <span class="mono">r</span> as {string.Join(", ", ruleSet.Names.Select(n => $"<span class=\"mono\">{H(n)}</span>{(n.Contains('@') ? "" : " (bundled with Rulpane)")}"))}.{(ruleSet.Tried is null ? " There is no copy of it here, so no view was tried against it." : $" Views were tried against <span class=\"mono\">{H(ruleSet.Tried)}</span>.")}</p>
-
-        <h2>Views that fit it as they are</h2>
-
-        """);
-
-    if (ruleSet.Fits.Count == 0)
-    {
-        page.Append("<p class=\"muted\">None yet.</p>\n");
-    }
-    else
-    {
-        page.Append("<table>\n<thead><tr><th>View</th><th>Title</th><th>What it reads</th><th></th></tr></thead>\n<tbody>\n");
-        foreach (Entry view in ruleSet.Fits)
-        {
-            string text = Read(view, Ledger.DocumentFile)!;
-            string open = rulpane + Fragment.Build(("r", ruleSet.Tried), ("v", view.Reference));
-            page.Append($"""
-                <tr>
-                  <td><a class="mono" href="../../release/{view.Id}/">{H(view.Reference)}</a></td>
-                  <td>{H(Parse(text)?["title"]?.GetValue<string>() ?? "")}</td>
-                  <td>{What(view.Kind, text)}</td>
-                  <td><a href="{H(open)}">Open it</a></td>
-                </tr>
-
-                """);
-        }
-
-        page.Append("</tbody>\n</table>\n");
-    }
-
-    page.Append("<h2>Panesets for it</h2>\n");
-    if (ruleSet.Panesets.Count == 0)
-    {
-        page.Append("<p class=\"muted\">None yet.</p>\n");
-    }
-    else
-    {
-        page.Append("<table>\n<thead><tr><th>Paneset</th><th>Title</th><th>Its rules</th><th></th></tr></thead>\n<tbody>\n");
-        foreach (var (paneset, rules) in ruleSet.Panesets)
-        {
-            page.Append($"""
-                <tr>
-                  <td><a class="mono" href="../../release/{paneset.Id}/">{H(paneset.Reference)}</a></td>
-                  <td>{H(Parse(Read(paneset, Ledger.DocumentFile)!)?["title"]?.GetValue<string>() ?? "")}</td>
-                  <td class="mono">{H(rules)}</td>
-                  <td><a href="{H(Open(paneset)!)}">Open it</a></td>
-                </tr>
-
-                """);
-        }
-
-        page.Append("</tbody>\n</table>\n");
-    }
-
-    page.Append("<h2>Tried with it in their samples</h2>\n");
-    if (ruleSet.Samples.Count == 0)
-    {
-        page.Append("<p class=\"muted\">None yet.</p>\n");
-    }
-    else
-    {
-        page.Append("<p>Views and themes whose authors tried them with these rules. A sample marked <span class=\"chip mono\">b</span> matches the rules' names to the view's, and the link that opens it carries that <span class=\"mono\">b</span>.</p>\n");
-        page.Append("<table>\n<thead><tr><th>Release</th><th>Kind</th><th>Its sample</th><th></th></tr></thead>\n<tbody>\n");
-        foreach (var (release, bound) in ruleSet.Samples)
-        {
-            string? open = Open(release);
-            page.Append($"""
-                <tr>
-                  <td><a class="mono" href="../../release/{release.Id}/">{H(release.Reference)}</a></td>
-                  <td><span class="chip">{H(release.Kind)}</span></td>
-                  <td><span class="mono">{H(release.Sample!)}</span>{(bound ? " <span class=\"chip mono\">b</span>" : "")}</td>
-                  <td>{(open is null ? "" : $"<a href=\"{H(open)}\">Open it</a>")}</td>
-                </tr>
-
-                """);
-        }
-
-        page.Append("</tbody>\n</table>\n");
-    }
-
-    return page.ToString();
-}
-
 string NamePage(string id, Entry[] releases, Entry? latest)
 {
     Entry shown = latest ?? releases[^1];
     string text = Read(shown, Ledger.DocumentFile)!;
-    string? title = Parse(text)?["title"]?.GetValue<string>();
+    string? open = latest is null ? null : Open(latest);
+    string? picture = latest is null ? null : Picture(latest);
     var page = new StringBuilder($"""
-        <p class="crumb"><a href="../../../">Gallery</a></p>
-        <h1 class="mono">{H(id)}</h1>
-        <p><span class="chip">{H(shown.Kind)}</span>{(title is null ? "" : $" {H(title)}")}</p>
-        <p>Published by the GitHub account <a href="https://github.com/{shown.Owner}">{H(shown.Owner)}</a> from <a href="https://github.com/{shown.Repository}">{H(shown.Repository)}</a>, under <span class="mono">{H(shown.License)}</span>. Its author wrote every word of it; nobody reviewed it.</p>
+        <p class="crumb"><a href="../../../">Gallery</a> <span>/</span> <a href="../../../?kind={shown.Kind}">{Plural(shown.Kind)}</a> <span>/</span> {H(id)}</p>
+        <div class="top">
+          <figure class="shot">{(picture is null
+              ? "<div class=\"none\">No picture of its screen</div>"
+              : $"<a href=\"{H(open!)}\"><img src=\"../../../release/{picture}\" alt=\"The screen {H(latest!.Reference)} opens{(latest.Sample is null ? "" : " in its sample")}\" width=\"640\" height=\"400\"></a>\n<figcaption>{H(latest.Reference)}{(latest.Sample is null ? "" : $" in its sample, <span class=\"mono\">{H(latest.Sample)}</span>")}, as Rulpane opens it</figcaption>")}</figure>
+          <aside class="side">
+            <div class="heading">{Kind(shown.Kind)}{(latest is null ? " <span class=\"kind withheld\">withheld</span>" : "")}
+              <h1>{H(id)}</h1>
+              <p class="mono muted">@{shown.Version}</p>
+            </div>
+            {(open is null ? "" : $"""
+            <a class="button primary wide" href="{H(open)}">Open in Rulpane{Icon.Line("arrow")}</a>
+            <div class="link"><span class="label">Link</span><div class="field"><input readonly value="{H(open)}" aria-label="Link"><button type="button" data-copy="{H(open)}">{Icon.Line("copy")}<span>Copy</span></button></div></div>
+            """)}
+            <dl class="facts">
+              {Facts(shown)}
+              <div><dt>Author</dt><dd><a href="https://github.com/{shown.Owner}">{H(shown.Owner)}</a></dd></div>
+              <div><dt>Read from</dt><dd><a class="mono" href="https://github.com/{shown.Repository}/blob/{shown.Commit}/{shown.Path}">{H(shown.Repository)} @ {shown.Commit[..7]}</a></dd></div>
+              <div><dt>Licence</dt><dd class="mono">{H(shown.License)}</dd></div>
+            </dl>
+            <p class="notice">Its author wrote every word of it; nobody reviewed it.</p>
+          </aside>
+        </div>
 
         """);
-
-    if (latest is not null && Picture(latest) is string picture && Open(latest) is string opened)
-    {
-        page.Append($"""
-            <figure class="shot"><a href="{H(opened)}"><img src="../../../release/{picture}" alt="The screen {H(latest.Reference)} opens{(latest.Sample is null ? "" : " in its sample")}" width="640" height="400"></a>
-            <figcaption>{H(latest.Reference)}{(latest.Sample is null ? "" : $" in its sample, {H(latest.Sample)}")}, as Rulpane opens it</figcaption></figure>
-
-            """);
-    }
 
     if (latest is null)
     {
@@ -456,30 +327,32 @@ string NamePage(string id, Entry[] releases, Entry? latest)
             <h2>Fits as it is</h2>
             <p>{(fits.Length == 0
                 ? "No rule set here has every name it reads. Rules that keep them under other names are matched to it by a paneset's <span class=\"mono\">b</span>."
-                : $"The rule sets that have every name it reads, which it opens with no <span class=\"mono\">b</span>: {string.Join(", ", fits.Select(r => $"<a class=\"mono\" href=\"../../../rules/{H(r.Id)}/\">{H(r.Id)}</a>"))}.")}</p>
+                : $"The rule sets that have every name it reads, which it opens with no <span class=\"mono\">b</span>: {string.Join(", ", fits.Select(r => Rules(r.Tried ?? r.Names[^1])))}.")}</p>
 
             """);
     }
 
-    page.Append("<h2>Releases</h2>\n<table>\n<thead><tr><th>Release</th><th>Read from</th><th></th></tr></thead>\n<tbody>\n");
+    page.Append("<h2>Releases</h2>\n<div class=\"table\"><table>\n<thead><tr><th>Release</th><th>Read from</th><th></th></tr></thead>\n<tbody>\n");
     foreach (Entry release in releases.Reverse())
     {
-        string? open = release.Withheld is null ? Open(release) : null;
+        string? opens = release.Withheld is null ? Open(release) : null;
         page.Append($"""
             <tr>
               <td class="mono">{H(release.Reference)}</td>
               <td><a class="mono" href="https://github.com/{release.Repository}/blob/{release.Commit}/{release.Path}">{H(release.Path)} @ {release.Commit[..7]}</a></td>
-              <td>{(release.Withheld is not null ? $"<span class=\"chip danger\">withheld</span> {H(release.Withheld)}" : open is null ? "" : $"<a href=\"{H(open)}\">Open it</a>")}</td>
+              <td class="end">{(release.Withheld is not null ? "<span class=\"kind withheld\">withheld</span>" : opens is null ? "" : $"<a class=\"button small\" href=\"{H(opens)}\">Open</a>")}</td>
             </tr>
+            {(release.Withheld is null ? "" : $"<tr class=\"why\"><td colspan=\"3\">{H(release.Withheld)}</td></tr>")}
 
             """);
     }
 
-    page.Append("</tbody>\n</table>\n");
+    page.Append("</tbody>\n</table></div>\n");
     page.Append($"""
         <h2>The document</h2>
-        <pre>{H(Indent(text))}</pre>
-        {(Read(shown, Ledger.SampleFile) is string sample ? $"<h2>Its sample</h2>\n<p>The paneset <span class=\"mono\">{H(shown.Sample!)}</span>, which it was tried in.</p>\n<pre>{H(Indent(sample))}</pre>" : "")}
+        <p class="muted">As its author committed it.</p>
+        {Code(Indent(text))}
+        {(Read(shown, Ledger.SampleFile) is string sample ? $"<h2>Its sample</h2>\n<p>The paneset <span class=\"mono\">{H(shown.Sample!)}</span>, which it was tried in.</p>\n{Code(Indent(sample))}" : "")}
         <details>
           <summary>Licence ({H(shown.License)})</summary>
           <pre>{H(Read(shown, Ledger.LicenseFile) ?? "")}</pre>
@@ -489,38 +362,61 @@ string NamePage(string id, Entry[] releases, Entry? latest)
     return page.ToString();
 }
 
-// How a link takes the newest release, by what it is.
-string Use(Entry latest, string text)
+// What a release is made of, beside its picture: a paneset's rules, view and theme, and the rules
+// a view or a theme was tried with, the rules linked to the Registry's page for them and the rest
+// to its page here, when they have one.
+string Facts(Entry release)
 {
-    string? open = Open(latest);
-    string button = open is null ? "" : $"<p><a class=\"button\" href=\"{H(open)}\">Open it</a>{(latest.Sample is null ? "" : $" <span class=\"muted\">— in its sample, {H(latest.Sample)}</span>")}</p>";
-    return latest.Kind switch
+    if (release.Kind != "paneset")
     {
-        "paneset" => $"""
-            <h2>Use it</h2>
-            <p>A link names it in <span class="mono">p=</span>, and may put any part of its own over it — here, another theme:</p>
-            <pre>{H(rulpane)}#p={H(latest.Reference)}&amp;t=paper</pre>
-            {button}
+        return Read(release, Ledger.SampleFile) is string sample
+            ? $"<div><dt>Tried with</dt><dd>{Rules(Paneset.Parse(sample).Rules)}</dd></div>"
+            : "";
+    }
 
-            """,
-        "theme" => $"""
-            <h2>Use it</h2>
-            <p>A link or a paneset names it in <span class="mono">t</span>, with any rules and view:</p>
-            <pre>{H(rulpane)}#r=&lt;rules&gt;&amp;v=&lt;view&gt;&amp;t={H(latest.Reference)}</pre>
-            {button}
+    Paneset paneset = Paneset.Parse(Read(release, Ledger.DocumentFile)!);
+    return $"<div><dt>Rules</dt><dd>{Rules(paneset.Rules)}</dd></div><div><dt>View</dt><dd>{Part(paneset.View)}</dd></div><div><dt>Theme</dt><dd>{(paneset.Theme is null ? "Rulpane's own" : Part(paneset.Theme))}</dd></div>";
 
-            """,
-        _ => $"""
-            <h2>Reads</h2>
-            {Reads(text)}
-            <h2>Use it</h2>
-            <p>A link or a paneset names it in <span class="mono">v</span>. Rules that keep what it reads under other names are matched to it by <span class="mono">b</span>:</p>
-            <pre>{H($$"""{ "$schema": "rulpane/paneset/v1", "r": "<rules>", "v": "{{latest.Reference}}", "b": { … } }""")}</pre>
-            {button}
-
-            """,
+    string Part(string? value) => value switch
+    {
+        null => "written in place",
+        _ when Released(value) is Entry named => $"<a class=\"mono\" href=\"../../../release/{named.Id}/\">{H(value)}</a>",
+        _ => $"<span class=\"mono\">{H(value)}</span>",
     };
 }
+
+// A rule set, by the name r gives it: linked to its page in the Registry when it is published there.
+string Rules(string? value) => value is null ? "written in place" : Source.Rules(value) switch
+{
+    { IsPacked: true } => "written in place",
+    { IsRegistered: true } source => $"<a class=\"mono\" href=\"{H(new Uri(Addresses.Registry, $"ruleset/{source.Reference.Id}.html").ToString())}\">{H(value)}</a>",
+    _ => $"<span class=\"mono\">{H(value)}</span>",
+};
+
+// How a link takes the newest release, by what it is.
+string Use(Entry latest, string text) => latest.Kind switch
+{
+    "paneset" => $"""
+        <h2>Use it</h2>
+        <p>A link names it in <span class="mono">p=</span>, and may put any part of its own over it — here, another theme:</p>
+        {Code($"{rulpane}#p={latest.Reference}&t=paper")}
+
+        """,
+    "theme" => $"""
+        <h2>Use it</h2>
+        <p>A link or a paneset names it in <span class="mono">t</span>, with any rules and view:</p>
+        {Code($"{rulpane}#r=<rules>&v=<view>&t={latest.Reference}")}
+
+        """,
+    _ => $"""
+        <h2>Reads</h2>
+        {Reads(text)}
+        <h2>Use it</h2>
+        <p>A link or a paneset names it in <span class="mono">v</span>. Rules that keep what it reads under other names are matched to it by <span class="mono">b</span>:</p>
+        {Code($$"""{ "$schema": "rulpane/paneset/v1", "r": "<rules>", "v": "{{latest.Reference}}", "b": { … } }""")}
+
+        """,
+};
 
 // The release opened in Rulpane: a paneset by its name, and a view or a theme by name in the
 // sample it was tried in, the sample's other parts given as a link gives them.
@@ -567,17 +463,11 @@ string Reads(string text)
 
     return rows.Length == 0
         ? "<p>Nothing: it reads no projection and names no input.</p>"
-        : $"<table>\n<thead><tr><th></th><th>Name</th><th>Type, or the parameters it uses</th></tr></thead>\n<tbody>\n{rows}</tbody>\n</table>";
+        : $"<div class=\"table\"><table>\n<thead><tr><th></th><th>Name</th><th>Type, or the parameters it uses</th></tr></thead>\n<tbody>\n{rows}</tbody>\n</table></div>";
 }
 
-// One line on what it is: what a view expects, a theme's look, a paneset's parts.
-string What(string kind, string text)
-{
-    string[] all = Parts(kind, text);
-    return all.Length == 0 ? "—" : string.Join(" ", all.Select(a => $"<span class=\"chip mono\">{H(a)}</span>"));
-}
-
-// The same, as words: each of them is a chip on a page and a word in llms.txt.
+// What a release is made of, as words: a view's expects, a theme's look, a paneset's parts. Each is a
+// word in llms.txt, and a theme's are the line under its title on its card.
 string[] Parts(string kind, string text)
 {
     JsonNode? root = Parse(text);
@@ -620,6 +510,43 @@ JsonNode? Parse(string text) => JsonNode.Parse(text, documentOptions: lenient);
 
 string Indent(string text) => Parse(text)?.ToJsonString(relaxed) ?? text;
 
+// The rule sets a release opens: those a view fits, a paneset names, or its sample was tried with.
+RuleSet[] RulesFor(Entry release) =>
+    [.. ruleSets.Where(r => r.Fits.Contains(release) || r.Panesets.Any(p => p.Release == release) || r.Samples.Any(s => s.Release == release))];
+
+// One release as a card: its picture, its name, what it opens, and its page. Only a paneset opens
+// from the card: it is a screen as it is, where a view or a theme is one only in its sample, which
+// its page says. The index filters the cards by the data- attributes.
+string Card(Entry release, bool withheld = false)
+{
+    string? open = release.Kind == "paneset" && !withheld ? Open(release) : null;
+    string? picture = withheld ? null : Picture(release);
+    RuleSet[] rules = RulesFor(release);
+    string text = Read(release, Ledger.DocumentFile)!;
+    string about = release.Kind == "theme" ? string.Join(" · ", Parts("theme", text)) : string.Join(", ", rules.Select(r => r.Id));
+    string page = $"release/{release.Id}/";
+    return $"""
+        <li class="card" data-kind="{(withheld ? "withheld" : release.Kind)}" data-rules="{H(string.Join(" ", rules.Select(r => r.Id)))}" data-text="{H($"{release.Id} {about}".ToLowerInvariant())}">
+          <a class="shot" href="{page}" tabindex="-1" aria-hidden="true">{(picture is null ? "<span class=\"none\">No picture</span>" : $"<img src=\"release/{picture}\" alt=\"\" width=\"640\" height=\"400\" loading=\"lazy\">")}</a>
+          <div class="about">
+            <a class="title" href="{page}">{H(release.Id)}</a>
+            <span class="mono muted">@{release.Version}</span>
+            <p class="meta">{Kind(release.Kind)}{(withheld ? "<span class=\"kind withheld\">withheld</span>" : "")}{(about.Length == 0 ? "" : $"<span>{H(about)}</span><span class=\"muted\">·</span>")}<span class="muted">{H(release.License)}</span></p>
+            <p class="actions">{(open is null ? "" : $"<a class=\"button small primary\" href=\"{H(open)}\">Open</a>")}<a class="button small" href="{page}">Details</a></p>
+          </div>
+        </li>
+
+        """;
+}
+
+// A block of code with a button that copies it.
+static string Code(string text) =>
+    $"<div class=\"code\"><button type=\"button\" data-copy=\"{H(text)}\">{Icon.Line("copy", 12)}<span>Copy</span></button><pre>{H(text)}</pre></div>";
+
+static string Kind(string kind) => $"<span class=\"kind {kind}\">{kind}</span>";
+
+static string Plural(string kind) => $"{char.ToUpperInvariant(kind[0])}{kind[1..]}s";
+
 string Page(string title, string root, string body) => $"""
     <!doctype html>
     <html lang="en">
@@ -631,11 +558,14 @@ string Page(string title, string root, string body) => $"""
     <link rel="stylesheet" href="{root}style.css">
     </head>
     <body>
-    <header class="bar"><a class="brand" href="{root}">Rulpane Gallery</a><span class="spacer"></span><a href="{root}rules/">By rule set</a><a href="{root}submit/">Submit</a><a href="{H(rulpane)}">Rulpane</a></header>
+    <header class="bar"><a class="brand" href="{root}">{Icon.Mark}Rulpane Gallery</a><span class="spacer"></span><nav><a class="button ghost small" href="{root}">Browse</a><a class="button ghost small" href="{root}submit/">Submit</a><a class="button ghost small" href="{Addresses.Registry}">Rule sets{Icon.Line("out")}</a><a class="button ghost small" href="{H(rulpane)}">Rulpane{Icon.Line("out")}</a></nav></header>
     <main>
     {body}
     </main>
-    <footer>Built from the <a href="https://github.com/{H(repository)}/blob/main/ledger/submitted.json">ledger</a> at {builtAt}. Each release is its author's, under the licence beside it; the ledger is CC0-1.0.</footer>
+    <footer>Built from the <a href="https://github.com/{H(repository)}/blob/main/ledger/submitted.json">ledger</a> at {builtAt}. Each release is its author's, under the licence beside it; the ledger is CC0-1.0. <a href="{root}llms.txt">As text, for an AI</a>.</footer>
+    <script>
+    {Script.Copy}
+    </script>
     </body>
     </html>
 

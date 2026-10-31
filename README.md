@@ -50,13 +50,14 @@ as the site is published again.
 
 ## The pages and the checks
 
-[`tool/Site`](tool/Site/) renders the ledger and the copies: every name, a page for each — how to
-use it, every release, the document, its sample and its licence, and a link that opens it — and
-the submit page. It also looks each rule set up — those Rulpane bundles and those in the
-Registry, under the id each declares — and lists what opens it: the views that **fit it as they
-are**, which Rulpane reads against those rules with no `b` and plays from their start, every
-position as the view expects; the panesets that name it; and the views and themes tried with it
-in their samples.
+[`tool/Site`](tool/Site/) renders the ledger and the copies: every name, which the index narrows by
+kind, by rule set and by words; a page for each — how to use it, every release, the document, its
+sample and its licence, and a link that opens it, with a button that copies it; and the submit page.
+They look as Rulpane does: its colours, its mark and icons, and its fonts, copied from the checkout.
+Rule sets are looked for in the Registry, which the pages link; here, each rule set — those Rulpane
+bundles and those in the Registry, under the id each declares — is only what the index narrows by,
+and a view's page says which ones it **fits as they are**: those Rulpane reads it against with no
+`b` and plays from their start, every position as the view expects.
 
 The same is written as text for an AI, at
 [`llms.txt`](https://reny-develop.github.io/Rulpane.Gallery/llms.txt): every name's newest release

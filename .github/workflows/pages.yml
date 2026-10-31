@@ -55,9 +55,11 @@ jobs:
       # Rulpane served from this runner with this ledger's releases beside it, as this site is
       # about to serve them, and the Registry read where it is. A picture that cannot be taken
       # is left off its page.
+      # A release in Japanese is pictured in a font that has its letters, not as boxes.
       - name: Take the pictures
         run: |
           set -euo pipefail
+          sudo apt-get install -y --no-install-recommends fonts-noto-cjk >/dev/null
           dotnet publish rulpane/src/Rulpane.Viewer -c Release -o work/viewer --nologo -v quiet
           dotnet run --project tool/Site -c Release -- --releases-to work/viewer/wwwroot/gallery
           echo '{ "Gallery": "gallery/" }' > work/viewer/wwwroot/appsettings.json
