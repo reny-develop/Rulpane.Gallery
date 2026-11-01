@@ -1,0 +1,101 @@
+{
+  "$schema": "rulealize/view/v1",
+  "ruleSet": "Rulealize.RuleSet.Calculator@1",
+  "title": "Scientific calculator",
+  "layout": [
+    {
+      "c": "board",
+      "as": "keys",
+      "bind": "$keys",
+      "play": "press.at",
+      "display": {
+        "bind": "display",
+        "format": {},
+        "above": "pending"
+      },
+      "tones": {
+        "DEG": "neutral",
+        "RAD": "neutral",
+        "sin": "neutral",
+        "cos": "neutral",
+        "tan": "neutral",
+        "π": "neutral",
+        "ln": "neutral",
+        "log": "neutral",
+        "eˣ": "neutral",
+        "10ˣ": "neutral",
+        "e": "neutral",
+        "x²": "neutral",
+        "√": "neutral",
+        "xʸ": "neutral",
+        "1/x": "neutral",
+        "n!": "neutral",
+        "(": "neutral",
+        ")": "neutral",
+        "±": "neutral",
+        "%": "neutral",
+        "|x|": "neutral",
+        "EXP": "neutral",
+        "Ans": "neutral",
+        "×": "accent",
+        "÷": "accent",
+        "+": "accent",
+        "−": "accent",
+        "=": "accent",
+        "⌫": "danger",
+        "C": "danger"
+      }
+    }
+  ],
+  "names": {
+    "inputs": {
+      "press": "Press"
+    },
+    "params": {
+      "at": "Key"
+    },
+    "values": {
+      "0,0": "DEG/RAD",
+      "1,0": "sin",
+      "2,0": "cos",
+      "3,0": "tan",
+      "4,0": "π",
+      "0,1": "ln",
+      "1,1": "log",
+      "2,1": "eˣ",
+      "3,1": "10ˣ",
+      "4,1": "e",
+      "0,2": "x²",
+      "1,2": "√",
+      "2,2": "xʸ",
+      "3,2": "1/x",
+      "4,2": "n!",
+      "0,3": "(",
+      "1,3": ")",
+      "2,3": "±",
+      "3,3": "%",
+      "4,3": "|x|",
+      "0,4": "7",
+      "1,4": "8",
+      "2,4": "9",
+      "3,4": "⌫",
+      "4,4": "C",
+      "0,5": "4",
+      "1,5": "5",
+      "2,5": "6",
+      "3,5": "×",
+      "4,5": "÷",
+      "0,6": "1",
+      "1,6": "2",
+      "2,6": "3",
+      "3,6": "+",
+      "4,6": "−",
+      "0,7": "0",
+      "1,7": ".",
+      "2,7": "EXP",
+      "3,7": "Ans",
+      "4,7": "=",
+      "error": "Error"
+    }
+  }
+}
