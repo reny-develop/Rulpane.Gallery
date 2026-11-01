@@ -1,0 +1,46 @@
+{
+  "$schema": "rulpane/paneset/v1",
+  "r": "Rulealize.RuleSet.Budget@1.0.0",
+  "v": "reny-develop/budget-ja-view@1",
+  "s": {
+    "spent": [
+      {
+        "date": "2026-11-01",
+        "category": "home",
+        "what": "家賃",
+        "amount": 72000
+      },
+      {
+        "date": "2026-11-01",
+        "category": "food",
+        "what": "スーパー",
+        "amount": 4800
+      },
+      {
+        "date": "2026-11-02",
+        "category": "transport",
+        "what": "定期券",
+        "amount": 9800
+      },
+      {
+        "date": "2026-11-02",
+        "category": "fun",
+        "what": "映画",
+        "amount": 1900
+      },
+      {
+        "date": "2026-11-03",
+        "category": "food",
+        "what": "スーパー",
+        "amount": 3600
+      },
+      {
+        "date": "2026-11-03",
+        "category": "utilities",
+        "what": "電気",
+        "amount": 6400
+      }
+    ],
+    "budget": 200000
+  }
+}
