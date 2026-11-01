@@ -1,0 +1,151 @@
+{
+  "$schema": "rulealize/view/v1",
+  "ruleSet": "Rulealize.RuleSet.WeightLog@1",
+  "title": "Weight log",
+  "layout": [
+    {
+      "c": "text",
+      "text": "Now {summary.latest} kg. {summary.left} kg to go to the goal of {summary.goal} kg.",
+      "format": {
+        "digits": 1
+      }
+    },
+    {
+      "c": "columns",
+      "widths": [
+        2,
+        1
+      ],
+      "blocks": [
+        {
+          "c": "chart",
+          "as": "lines",
+          "title": "Weight",
+          "bind": "days",
+          "x": "date",
+          "format": {
+            "digits": 1
+          },
+          "lines": [
+            {
+              "key": "weight",
+              "label": "Weight"
+            },
+            {
+              "key": "goal",
+              "label": "Goal",
+              "tone": "neutral"
+            }
+          ]
+        },
+        {
+          "c": "progress",
+          "items": [
+            {
+              "label": "Days with exercise",
+              "bind": "summary.exercised",
+              "of": "summary.days"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "c": "columns",
+      "widths": [
+        2,
+        1
+      ],
+      "blocks": [
+        {
+          "c": "actions",
+          "title": "Record a day",
+          "inputs": [
+            "record"
+          ],
+          "controls": {
+            "date": "date",
+            "condition": "slider"
+          }
+        },
+        {
+          "c": "actions",
+          "title": "Goal",
+          "inputs": [
+            "goal"
+          ],
+          "fill": {
+            "goal": "summary.goal"
+          }
+        }
+      ]
+    },
+    {
+      "c": "table",
+      "title": "Days",
+      "bind": "days",
+      "columns": [
+        {
+          "key": "date",
+          "label": "Date"
+        },
+        {
+          "key": "weight",
+          "label": "Weight",
+          "format": {
+            "digits": 1,
+            "suffix": " kg"
+          }
+        },
+        {
+          "key": "condition",
+          "label": "Condition",
+          "tone": {
+            "1": "danger",
+            "2": "warn",
+            "3": "neutral",
+            "4": "ok",
+            "5": "ok"
+          }
+        },
+        {
+          "key": "exercised",
+          "label": "Exercise",
+          "tone": {
+            "yes": "ok",
+            "no": "neutral"
+          }
+        }
+      ],
+      "rowActions": [
+        {
+          "input": "remove",
+          "args": {
+            "date": "date"
+          }
+        }
+      ]
+    }
+  ],
+  "names": {
+    "inputs": {
+      "record": "Record",
+      "goal": "Change",
+      "remove": "Remove"
+    },
+    "params": {
+      "date": "Date",
+      "weight": "Weight (kg)",
+      "condition": "How the day felt (1–5)",
+      "exercised": "Exercised",
+      "goal": "Goal (kg)"
+    },
+    "codes": {
+      "date.form": "Write the date as 2026-11-03."
+    },
+    "values": {
+      "yes": "Yes",
+      "no": "No"
+    }
+  }
+}
