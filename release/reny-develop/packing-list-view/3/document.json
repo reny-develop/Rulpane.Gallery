@@ -1,0 +1,90 @@
+{
+  "$schema": "rulealize/view/v1",
+  "ruleSet": "Rulealize.RuleSet.PackingList@1.1",
+  "title": "Packing list",
+  "layout": [
+    {
+      "c": "progress",
+      "items": [
+        {
+          "label": "Packed",
+          "bind": "counts.packed",
+          "of": "counts.all"
+        }
+      ]
+    },
+    {
+      "c": "columns",
+      "widths": [
+        3,
+        2
+      ],
+      "blocks": [
+        {
+          "c": "table",
+          "title": "The list",
+          "bind": "list",
+          "columns": [
+            {
+              "key": "item",
+              "label": "Item"
+            },
+            {
+              "key": "state",
+              "label": "",
+              "tone": {
+                "packed": "ok",
+                "left": "warn"
+              }
+            }
+          ],
+          "rowActions": [
+            {
+              "input": "pack",
+              "args": {
+                "item": "item"
+              }
+            },
+            {
+              "input": "unpack",
+              "args": {
+                "item": "item"
+              }
+            },
+            {
+              "input": "remove",
+              "args": {
+                "item": "item"
+              }
+            }
+          ]
+        },
+        {
+          "c": "actions",
+          "title": "Add an item",
+          "inputs": [
+            "add"
+          ]
+        }
+      ]
+    }
+  ],
+  "names": {
+    "inputs": {
+      "add": "Add",
+      "pack": "Packed",
+      "unpack": "Take out",
+      "remove": "Remove"
+    },
+    "params": {
+      "item": "Item"
+    },
+    "codes": {
+      "item.listed": "That is on the list already."
+    },
+    "values": {
+      "packed": "Packed",
+      "left": "Not yet"
+    }
+  }
+}
