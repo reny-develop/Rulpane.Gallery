@@ -1,0 +1,151 @@
+{
+  "$schema": "rulealize/view/v1",
+  "ruleSet": "Rulealize.RuleSet.WeightLog@1",
+  "title": "体重記録",
+  "layout": [
+    {
+      "c": "text",
+      "text": "いまは {summary.latest} kg。目標の {summary.goal} kg まで、あと {summary.left} kg です。",
+      "format": {
+        "digits": 1
+      }
+    },
+    {
+      "c": "columns",
+      "widths": [
+        2,
+        1
+      ],
+      "blocks": [
+        {
+          "c": "chart",
+          "as": "lines",
+          "title": "体重の推移",
+          "bind": "days",
+          "x": "date",
+          "format": {
+            "digits": 1
+          },
+          "lines": [
+            {
+              "key": "weight",
+              "label": "体重"
+            },
+            {
+              "key": "goal",
+              "label": "目標",
+              "tone": "neutral"
+            }
+          ]
+        },
+        {
+          "c": "progress",
+          "items": [
+            {
+              "label": "運動した日",
+              "bind": "summary.exercised",
+              "of": "summary.days"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "c": "columns",
+      "widths": [
+        2,
+        1
+      ],
+      "blocks": [
+        {
+          "c": "actions",
+          "title": "今日の記録",
+          "inputs": [
+            "record"
+          ],
+          "controls": {
+            "date": "date",
+            "condition": "slider"
+          }
+        },
+        {
+          "c": "actions",
+          "title": "目標",
+          "inputs": [
+            "goal"
+          ],
+          "fill": {
+            "goal": "summary.goal"
+          }
+        }
+      ]
+    },
+    {
+      "c": "table",
+      "title": "記録",
+      "bind": "days",
+      "columns": [
+        {
+          "key": "date",
+          "label": "日付"
+        },
+        {
+          "key": "weight",
+          "label": "体重",
+          "format": {
+            "digits": 1,
+            "suffix": " kg"
+          }
+        },
+        {
+          "key": "condition",
+          "label": "体調",
+          "tone": {
+            "1": "danger",
+            "2": "warn",
+            "3": "neutral",
+            "4": "ok",
+            "5": "ok"
+          }
+        },
+        {
+          "key": "exercised",
+          "label": "運動",
+          "tone": {
+            "yes": "ok",
+            "no": "neutral"
+          }
+        }
+      ],
+      "rowActions": [
+        {
+          "input": "remove",
+          "args": {
+            "date": "date"
+          }
+        }
+      ]
+    }
+  ],
+  "names": {
+    "inputs": {
+      "record": "記録する",
+      "goal": "変える",
+      "remove": "消す"
+    },
+    "params": {
+      "date": "日付",
+      "weight": "体重（kg）",
+      "condition": "体調（1〜5）",
+      "exercised": "運動した",
+      "goal": "目標（kg）"
+    },
+    "codes": {
+      "date.form": "日付は 2026-11-03 の形で入れてください。"
+    },
+    "values": {
+      "yes": "した",
+      "no": "しなかった"
+    }
+  }
+}
