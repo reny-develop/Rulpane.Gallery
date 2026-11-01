@@ -1,0 +1,172 @@
+{
+  "$schema": "rulealize/view/v1",
+  "ruleSet": "Rulealize.RuleSet.Budget@1",
+  "title": "家計簿",
+  "layout": [
+    {
+      "c": "text",
+      "text": "今月は {summary.total} 円使いました。予算の残りは {summary.left} 円です。",
+      "format": {},
+      "showWhen": "summary.within"
+    },
+    {
+      "c": "text",
+      "text": "今月は {summary.total} 円使いました。予算を {summary.overBy} 円超えています。",
+      "format": {},
+      "showWhen": "summary.over"
+    },
+    {
+      "c": "columns",
+      "widths": [
+        3,
+        2
+      ],
+      "blocks": [
+        {
+          "c": "chart",
+          "as": "pie",
+          "title": "使いみち",
+          "bind": "byCategory",
+          "x": "category",
+          "value": "amount",
+          "format": {
+            "suffix": " 円"
+          }
+        },
+        {
+          "c": "fields",
+          "title": "今月",
+          "rows": [
+            {
+              "label": "使った",
+              "bind": "summary.total",
+              "format": {
+                "suffix": " 円"
+              }
+            },
+            {
+              "label": "予算",
+              "bind": "summary.budget",
+              "format": {
+                "suffix": " 円"
+              }
+            },
+            {
+              "label": "残り",
+              "bind": "summary.left",
+              "format": {
+                "suffix": " 円"
+              }
+            },
+            {
+              "label": "状態",
+              "bind": "summary.state",
+              "tone": {
+                "over": "danger",
+                "within": "ok"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "c": "columns",
+      "widths": [
+        2,
+        1
+      ],
+      "blocks": [
+        {
+          "c": "actions",
+          "title": "支出を記録する",
+          "inputs": [
+            "spend"
+          ],
+          "controls": {
+            "date": "date"
+          }
+        },
+        {
+          "c": "actions",
+          "title": "予算",
+          "inputs": [
+            "budget"
+          ],
+          "fill": {
+            "budget": "summary.budget"
+          }
+        }
+      ]
+    },
+    {
+      "c": "table",
+      "title": "支出",
+      "bind": "spent",
+      "columns": [
+        {
+          "key": "date",
+          "label": "日付"
+        },
+        {
+          "key": "category",
+          "label": "分類"
+        },
+        {
+          "key": "what",
+          "label": "内容"
+        },
+        {
+          "key": "amount",
+          "label": "金額",
+          "format": {
+            "suffix": " 円"
+          }
+        }
+      ],
+      "rowActions": [
+        {
+          "input": "remove",
+          "args": {
+            "n": "n"
+          }
+        }
+      ]
+    },
+    {
+      "c": "actions",
+      "title": "来月にする",
+      "inputs": [
+        "clear"
+      ]
+    }
+  ],
+  "names": {
+    "inputs": {
+      "spend": "記録する",
+      "budget": "変える",
+      "remove": "消す",
+      "clear": "支出を全部消す"
+    },
+    "params": {
+      "date": "日付",
+      "category": "分類",
+      "what": "内容",
+      "amount": "金額",
+      "budget": "予算"
+    },
+    "codes": {
+      "date.form": "日付は 2026-11-03 の形で入れてください。"
+    },
+    "values": {
+      "food": "食費",
+      "home": "住まい",
+      "utilities": "光熱費",
+      "transport": "交通",
+      "fun": "娯楽",
+      "other": "その他",
+      "over": "予算オーバー",
+      "within": "予算内"
+    }
+  }
+}
