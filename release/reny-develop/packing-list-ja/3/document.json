@@ -1,0 +1,14 @@
+{
+  "$schema": "rulpane/paneset/v1",
+  "r": "Rulealize.RuleSet.PackingList@1.1.0",
+  "v": "reny-develop/packing-list-ja-view@3",
+  "s": {
+    "items": [
+      "財布",
+      "スマホの充電器",
+      "歯ブラシ",
+      "着替え"
+    ],
+    "packed": []
+  }
+}
