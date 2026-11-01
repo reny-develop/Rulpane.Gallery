@@ -1,0 +1,90 @@
+{
+  "$schema": "rulealize/view/v1",
+  "ruleSet": "Rulealize.RuleSet.PackingList@1.1",
+  "title": "持ち物チェックリスト",
+  "layout": [
+    {
+      "c": "progress",
+      "items": [
+        {
+          "label": "詰めた",
+          "bind": "counts.packed",
+          "of": "counts.all"
+        }
+      ]
+    },
+    {
+      "c": "columns",
+      "widths": [
+        3,
+        2
+      ],
+      "blocks": [
+        {
+          "c": "table",
+          "title": "持ち物",
+          "bind": "list",
+          "columns": [
+            {
+              "key": "item",
+              "label": "持ち物"
+            },
+            {
+              "key": "state",
+              "label": "",
+              "tone": {
+                "packed": "ok",
+                "left": "warn"
+              }
+            }
+          ],
+          "rowActions": [
+            {
+              "input": "pack",
+              "args": {
+                "item": "item"
+              }
+            },
+            {
+              "input": "unpack",
+              "args": {
+                "item": "item"
+              }
+            },
+            {
+              "input": "remove",
+              "args": {
+                "item": "item"
+              }
+            }
+          ]
+        },
+        {
+          "c": "actions",
+          "title": "持ち物を足す",
+          "inputs": [
+            "add"
+          ]
+        }
+      ]
+    }
+  ],
+  "names": {
+    "inputs": {
+      "add": "足す",
+      "pack": "詰めた",
+      "unpack": "出す",
+      "remove": "消す"
+    },
+    "params": {
+      "item": "持ち物"
+    },
+    "codes": {
+      "item.listed": "もうリストにあります。"
+    },
+    "values": {
+      "packed": "入れた",
+      "left": "まだ"
+    }
+  }
+}
