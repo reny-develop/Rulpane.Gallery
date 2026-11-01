@@ -1,0 +1,45 @@
+{
+  "$schema": "rulpane/paneset/v1",
+  "r": "Rulealize.RuleSet.Budget@1.0.0",
+  "s": {
+    "spent": [
+      {
+        "date": "2026-11-01",
+        "category": "home",
+        "what": "Rent",
+        "amount": 72000
+      },
+      {
+        "date": "2026-11-01",
+        "category": "food",
+        "what": "Groceries",
+        "amount": 4800
+      },
+      {
+        "date": "2026-11-02",
+        "category": "transport",
+        "what": "Train pass",
+        "amount": 9800
+      },
+      {
+        "date": "2026-11-02",
+        "category": "fun",
+        "what": "Cinema",
+        "amount": 1900
+      },
+      {
+        "date": "2026-11-03",
+        "category": "food",
+        "what": "Groceries",
+        "amount": 3600
+      },
+      {
+        "date": "2026-11-03",
+        "category": "utilities",
+        "what": "Electricity",
+        "amount": 6400
+      }
+    ],
+    "budget": 200000
+  }
+}

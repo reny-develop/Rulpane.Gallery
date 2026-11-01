@@ -1,0 +1,162 @@
+{
+  "$schema": "rulealize/view/v1",
+  "ruleSet": "Rulealize.RuleSet.Budget@1",
+  "title": "Household budget",
+  "layout": [
+    {
+      "c": "text",
+      "text": "Spent {summary.total} this month, {summary.left} left of the budget.",
+      "format": {},
+      "showWhen": "summary.within"
+    },
+    {
+      "c": "text",
+      "text": "Spent {summary.total} this month, {summary.overBy} over the budget.",
+      "format": {},
+      "showWhen": "summary.over"
+    },
+    {
+      "c": "columns",
+      "widths": [
+        3,
+        2
+      ],
+      "blocks": [
+        {
+          "c": "chart",
+          "as": "pie",
+          "title": "Where it went",
+          "bind": "byCategory",
+          "x": "category",
+          "value": "amount",
+          "format": {}
+        },
+        {
+          "c": "fields",
+          "title": "This month",
+          "rows": [
+            {
+              "label": "Spent",
+              "bind": "summary.total",
+              "format": {}
+            },
+            {
+              "label": "Budget",
+              "bind": "summary.budget",
+              "format": {}
+            },
+            {
+              "label": "Left",
+              "bind": "summary.left",
+              "format": {}
+            },
+            {
+              "label": "Status",
+              "bind": "summary.state",
+              "tone": {
+                "over": "danger",
+                "within": "ok"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "c": "columns",
+      "widths": [
+        2,
+        1
+      ],
+      "blocks": [
+        {
+          "c": "actions",
+          "title": "Record spending",
+          "inputs": [
+            "spend"
+          ],
+          "controls": {
+            "date": "date"
+          }
+        },
+        {
+          "c": "actions",
+          "title": "Budget",
+          "inputs": [
+            "budget"
+          ],
+          "fill": {
+            "budget": "summary.budget"
+          }
+        }
+      ]
+    },
+    {
+      "c": "table",
+      "title": "Spending",
+      "bind": "spent",
+      "columns": [
+        {
+          "key": "date",
+          "label": "Date"
+        },
+        {
+          "key": "category",
+          "label": "Category"
+        },
+        {
+          "key": "what",
+          "label": "What"
+        },
+        {
+          "key": "amount",
+          "label": "Amount",
+          "format": {}
+        }
+      ],
+      "rowActions": [
+        {
+          "input": "remove",
+          "args": {
+            "n": "n"
+          }
+        }
+      ]
+    },
+    {
+      "c": "actions",
+      "title": "Next month",
+      "inputs": [
+        "clear"
+      ]
+    }
+  ],
+  "names": {
+    "inputs": {
+      "spend": "Record",
+      "budget": "Change",
+      "remove": "Remove",
+      "clear": "Clear every line"
+    },
+    "params": {
+      "date": "Date",
+      "category": "Category",
+      "what": "What",
+      "amount": "Amount",
+      "budget": "Budget"
+    },
+    "codes": {
+      "date.form": "Write the date as 2026-11-03."
+    },
+    "values": {
+      "food": "Food",
+      "home": "Home",
+      "utilities": "Utilities",
+      "transport": "Transport",
+      "fun": "Fun",
+      "other": "Other",
+      "over": "Over budget",
+      "within": "Within budget"
+    }
+  }
+}
